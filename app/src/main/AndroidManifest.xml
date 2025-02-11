@@ -25,6 +25,8 @@
             android:name=".LoginActivity"
             android:exported="true">
         </activity>
+        <activity android:name=".EnterTableNumberActivity"/>
+        <activity android:name=".FoodActivity" />
         <activity android:name=".OrderActivity"/>
         <activity android:name=".OrderDetailActivity" />
 

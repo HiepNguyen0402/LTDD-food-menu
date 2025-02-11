@@ -39,9 +39,13 @@ android {
 }
 
 dependencies {
+    implementation(libs.glide)
+    kapt(libs.glide.compiler)
+
+    // Các thư viện khác
     implementation("androidx.room:room-runtime:2.5.2")
-    kapt("androidx.room:room-compiler:2.5.2")  // Cần thiết!
-    implementation("androidx.room:room-ktx:2.5.2")  // Hỗ trợ Kotlin
+    kapt("androidx.room:room-compiler:2.5.2")
+    implementation("androidx.room:room-ktx:2.5.2")
     implementation ("com.google.android.material:material:1.9.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

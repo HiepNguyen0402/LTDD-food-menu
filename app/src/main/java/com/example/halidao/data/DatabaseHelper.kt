@@ -3,6 +3,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import com.example.halidao.data.model.MenuItem
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -12,7 +13,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 4 // Tăng version để cập nhật database
+        private const val DATABASE_VERSION = 5 // Tăng version để cập nhật database
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -371,6 +372,30 @@ class DatabaseHelper(context: Context) :
         return items
     }
 
+    fun getAllMenuItems(): List<MenuItem> {
+        val menuItems = mutableListOf<MenuItem>()
+        val db = readableDatabase
+        val query = """
+        SELECT MonAn.id, MonAn.ten_mon, MonAn.so_tien, MonAn.hinh_anh, DanhMuc.danh_muc 
+        FROM MonAn
+        JOIN DanhMuc ON MonAn.id_danh_muc = DanhMuc.id
+    """
+        val cursor = db.rawQuery(query, null)
+
+        while (cursor.moveToNext()) {
+            val menuItem = MenuItem(
+                id = cursor.getInt(0),
+                tenMon = cursor.getString(1),
+                gia = cursor.getInt(2),
+                hinhAnh = cursor.getString(3),
+                danhMuc = cursor.getString(4)
+            )
+            menuItems.add(menuItem)
+        }
+        cursor.close()
+        Log.d("DatabaseHelper", "Lấy danh sách món ăn thành công: $menuItems")
+        return menuItems
+    }
 
 
 

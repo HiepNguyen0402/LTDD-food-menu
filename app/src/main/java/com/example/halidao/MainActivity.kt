@@ -10,11 +10,12 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
-
+    private lateinit var btnViewMenuList: Button
     // Admin
     private lateinit var btnManageFood: Button
     private lateinit var btnManageStaff: Button
-    private lateinit var btnRevenue: Button
+//    private lateinit var btnRevenue: Button
+
 
     // Nhân viên
     private lateinit var btnUpdateStatus: Button
@@ -33,13 +34,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // Ánh xạ các button từ XML
+//        btnLogin = findViewById(R.id.btn_login)
         btnLogin = findViewById(R.id.btn_login)
-
         // Admin
         btnManageFood = findViewById(R.id.btn_manage_food)
         btnManageStaff = findViewById(R.id.btn_manage_staff)
-        btnRevenue = findViewById(R.id.btn_revenue)
-
+//        btnRevenue = findViewById(R.id.btn_revenue)
+        btnViewOrderStatus = findViewById(R.id.btn_view_order_status)
         // Nhân viên
         btnUpdateStatus = findViewById(R.id.btn_update_status)
         btnConfirmPayment = findViewById(R.id.btn_confirm_payment)
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         // Khách hàng
         btnViewMenu = findViewById(R.id.btn_view_menu)
         btnOrderAtTable = findViewById(R.id.btn_order_at_table)
-        btnViewOrderStatus = findViewById(R.id.btn_view_order_status)
+        btnViewMenuList = findViewById(R.id.btn_view_menu_list)
 
         // Lấy role của người dùng từ database
         getUserRole()
@@ -70,48 +71,52 @@ class MainActivity : AppCompatActivity() {
             "admin" -> {
                 btnManageFood.visibility = View.VISIBLE
                 btnManageStaff.visibility = View.VISIBLE
-                btnRevenue.visibility = View.VISIBLE
+//                btnRevenue.visibility = View.VISIBLE
                 btnUpdateStatus.visibility = View.GONE
                 btnConfirmPayment.visibility = View.GONE
                 btnViewOrders.visibility = View.VISIBLE
                 btnViewMenu.visibility = View.GONE
                 btnOrderAtTable.visibility = View.GONE
                 btnViewOrderStatus.visibility = View.GONE
+                btnViewMenuList.visibility = View.VISIBLE
             }
             "staff" -> {
                 btnManageFood.visibility = View.GONE
                 btnManageStaff.visibility = View.GONE
-                btnRevenue.visibility = View.GONE
+//                btnRevenue.visibility = View.GONE
                 btnUpdateStatus.visibility = View.VISIBLE
                 btnConfirmPayment.visibility = View.VISIBLE
                 btnViewOrders.visibility = View.VISIBLE
                 btnViewMenu.visibility = View.GONE
                 btnOrderAtTable.visibility = View.GONE
                 btnViewOrderStatus.visibility = View.GONE
+                btnViewMenuList.visibility = View.VISIBLE
             }
             "customer" -> {
                 btnManageFood.visibility = View.GONE
                 btnManageStaff.visibility = View.GONE
-                btnRevenue.visibility = View.GONE
+//                btnRevenue.visibility = View.GONE
                 btnUpdateStatus.visibility = View.GONE
                 btnConfirmPayment.visibility = View.GONE
                 btnViewMenu.visibility = View.VISIBLE
                 btnOrderAtTable.visibility = View.VISIBLE
                 btnViewOrderStatus.visibility = View.VISIBLE
                 btnViewOrders.visibility = View.VISIBLE
+//                btnViewMenuList.visibility = View.VISIBLE
 
             }
             else -> {
                 // Nếu chưa đăng nhập, ẩn hết nút trừ đăng nhập
                 btnManageFood.visibility = View.GONE
                 btnManageStaff.visibility = View.GONE
-                btnRevenue.visibility = View.GONE
+//                btnRevenue.visibility = View.GONE
                 btnUpdateStatus.visibility = View.GONE
                 btnConfirmPayment.visibility = View.GONE
                 btnViewOrders.visibility = View.VISIBLE
                 btnViewMenu.visibility = View.GONE
                 btnOrderAtTable.visibility = View.GONE
                 btnViewOrderStatus.visibility = View.GONE
+                btnViewMenuList.visibility = View.VISIBLE
             }
         }
     }
@@ -125,7 +130,10 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, OrderActivity::class.java)
             startActivity(intent)
         }
-
+        btnViewMenuList.setOnClickListener {
+            val intent = Intent(this, EnterTableNumberActivity::class.java)
+            startActivity(intent)
+        }
 //        btnManageFood.setOnClickListener {
 //            startActivity(Intent(this, ManageFoodActivity::class.java))
 //        }

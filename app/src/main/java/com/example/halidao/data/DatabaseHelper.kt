@@ -13,7 +13,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 5 // Tăng version để cập nhật database
+        private const val DATABASE_VERSION = 8// Tăng version để cập nhật database
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -45,7 +45,7 @@ class DatabaseHelper(context: Context) :
             CREATE TABLE BanAn (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 so_ban INTEGER NOT NULL UNIQUE,
-                id_trang_thai INTEGER DEFAULT 1,
+                id_trang_thai INTEGER DEFAULT 1,    
                 FOREIGN KEY (id_trang_thai) REFERENCES TrangThai(id)
             );
         """)
@@ -78,7 +78,7 @@ class DatabaseHelper(context: Context) :
                 id_khach_hang INTEGER,
                 ngay INTEGER NOT NULL,
                 tong_tien INTEGER NOT NULL,
-                id_trang_thai INTEGER DEFAULT 1,
+                id_trang_thai INTEGER DEFAULT 4,
                 da_thanh_toan INTEGER DEFAULT 0,
                 phuong_thuc_thanh_toan TEXT DEFAULT NULL,
                 FOREIGN KEY (id_ban) REFERENCES BanAn(id) ON DELETE CASCADE,
@@ -98,7 +98,7 @@ class DatabaseHelper(context: Context) :
                 id_mon_an INTEGER NOT NULL,
                 so_luong INTEGER NOT NULL DEFAULT 1,
                 gia INTEGER NOT NULL,
-                id_trang_thai INTEGER DEFAULT 1,
+                id_trang_thai INTEGER DEFAULT 4,
                 FOREIGN KEY (id_don_hang) REFERENCES DonHang(id) ON DELETE CASCADE,
                 FOREIGN KEY (id_mon_an) REFERENCES MonAn(id) ON DELETE CASCADE,
                 FOREIGN KEY (id_trang_thai) REFERENCES TrangThai(id)
@@ -147,7 +147,13 @@ class DatabaseHelper(context: Context) :
         """)
 
         // Thêm dữ liệu mặc định cho bảng trạng thái
-        db.execSQL("INSERT INTO TrangThai (ten) VALUES ('Trống'), ('Đang sử dụng'), ('Đang chuẩn bị'), ('Hoàn thành');")
+        db.execSQL("INSERT INTO TrangThai (ten) VALUES \n" +
+                "('Bàn trống'), \n" +
+                "('Bàn đang sử dụng'), \n" +
+                "('Bàn đang dọn dẹp'), \n" +
+                "('Món chưa làm'), \n" +
+                "('Món đang làm'), \n" +
+                "('Món đã xong');\n")
 // Thêm dữ liệu mẫu vào Bảng Khách Hàng
         db.execSQL("""
         INSERT INTO KhachHang (ten, sdt, email, diem_tich_luy) VALUES 
@@ -180,16 +186,16 @@ class DatabaseHelper(context: Context) :
         // Thêm dữ liệu mẫu vào Bảng Đơn Hàng
         db.execSQL("""
         INSERT INTO DonHang (id_ban, id_khach_hang, ngay, tong_tien, id_trang_thai, da_thanh_toan, phuong_thuc_thanh_toan) VALUES 
-        (1, 1, strftime('%s','now'), 50000, 1, 0, NULL),
-        (2, 2, strftime('%s','now'), 60000, 2, 0, NULL),
+        (1, 4, strftime('%s','now'), 50000, 1, 0, NULL),
+        (2, 5, strftime('%s','now'), 60000, 2, 0, NULL),
         (3, NULL, strftime('%s','now'), 70000, 1, 0, 'Tiền mặt');
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Chi Tiết Đơn Hàng
         db.execSQL("""
         INSERT INTO ChiTietDonHang (id_don_hang, id_mon_an, so_luong, gia, id_trang_thai) VALUES 
-        (1, 1, 2, 50000, 1),
-        (2, 2, 1, 60000, 2),
+        (1, 1, 2, 50000, 4),
+        (2, 2, 1, 60000, 5),
         (3, 3, 3, 40000, 3);
     """)
 
@@ -248,45 +254,51 @@ class DatabaseHelper(context: Context) :
         val orders = mutableListOf<Order>()
         val db = readableDatabase
         val query = """
-        SELECT DonHang.id, BanAn.so_ban, DonHang.tong_tien, DonHang.id_trang_thai, 
+        SELECT DonHang.id, DonHang.id_ban, BanAn.so_ban, DonHang.tong_tien, DonHang.id_trang_thai, 
                DonHang.da_thanh_toan, DonHang.id_khach_hang, DonHang.ngay 
         FROM DonHang
-        JOIN BanAn ON DonHang.id_ban = BanAn.id
+        JOIN BanAn ON DonHang.id_ban = BanAn.id  -- ✅ Đảm bảo lấy thông tin bàn
         WHERE DonHang.id_trang_thai = ?
     """
         val cursor = db.rawQuery(query, arrayOf(statusId.toString()))
 
-        Log.d("Database", "Số lượng đơn hàng lấy được: ${cursor.count}") // Kiểm tra số dòng lấy được
-
         while (cursor.moveToNext()) {
             val order = Order(
                 id = cursor.getInt(0),
-                idBan = cursor.getInt(1),
-                tongTien = cursor.getInt(2),
-                trangThai = cursor.getInt(3),
-                daThanhToan = cursor.getInt(4) == 1,
-                idKhachHang = if (cursor.isNull(5)) null else cursor.getInt(5),
-                ngay = cursor.getString(6)
+                idBan = cursor.getInt(1), // ✅ Đảm bảo lấy id_ban
+                tongTien = cursor.getInt(3),
+                trangThai = cursor.getInt(4),
+                daThanhToan = cursor.getInt(5) == 1,
+                idKhachHang = if (cursor.isNull(6)) null else cursor.getInt(6),
+                ngay = cursor.getString(7)
             )
             orders.add(order)
         }
         cursor.close()
-        val querys = "SELECT * FROM DonHang WHERE id_trang_thai = 1"
-        Log.d("DatabaseHelper", "SQL Query: $querys")
-
-        Log.d("Database", "Danh sách đơn hàng: $orders") // In danh sách đơn hàng ra log
         return orders
     }
 
-    fun updateOrderStatus(orderId: Int, newStatusId: Int): Boolean {
-        val db = writableDatabase
-        val values = ContentValues()
-        values.put("id_trang_thai", newStatusId)
 
-        val rowsUpdated = db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
+
+    fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int): Boolean {
+        val db = writableDatabase
+
+        val values = ContentValues().apply {
+            put("id_trang_thai", newStatus) // ✅ Cập nhật trạng thái món ăn trong `ChiTietDonHang`
+        }
+
+        val rowsUpdated = db.update(
+            "ChiTietDonHang",
+            values,
+            "id_don_hang = ? AND id_trang_thai = ?",
+            arrayOf(orderId.toString(), currentStatus.toString())
+        )
+
         db.close()
         return rowsUpdated > 0
     }
+
+
     fun payOrder(orderId: Int, amount: Int, paymentMethod: String): Boolean {
         val db = writableDatabase
         db.beginTransaction()
@@ -349,22 +361,23 @@ class DatabaseHelper(context: Context) :
             db.close()
         }
     }
-    fun getOrderDetails(orderId: Int): List<OrderDetail> {
+    fun getOrderDetailsByStatus(orderId: Int, status: Int): List<OrderDetail> {
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
         val query = """
         SELECT MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
-        WHERE ChiTietDonHang.id_don_hang = ?
-    """
-        val cursor = db.rawQuery(query, arrayOf(orderId.toString()))
+        WHERE ChiTietDonHang.id_don_hang = ? AND ChiTietDonHang.id_trang_thai = ?
+    """ // ✅ Thêm điều kiện lọc theo trạng thái món ăn
+
+        val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
 
         if (cursor.moveToFirst()) {
             do {
                 val tenMon = cursor.getString(0) // Lấy tên món ăn
-                val soLuong = cursor.getInt(1) // Lấy số lượng
-                val gia = cursor.getInt(2) // Lấy giá
+                val soLuong = cursor.getInt(1)   // Lấy số lượng
+                val gia = cursor.getInt(2)       // Lấy giá
                 items.add(OrderDetail(tenMon, soLuong, gia))
             } while (cursor.moveToNext())
         }
@@ -398,6 +411,49 @@ class DatabaseHelper(context: Context) :
     }
 
 
+    fun updateTableStatus(tableId: Int, newStatusId: Int): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("id_trang_thai", newStatusId) // ✅ Cập nhật trạng thái bàn
+        }
+
+        val rowsUpdated = db.update("BanAn", values, "id = ?", arrayOf(tableId.toString()))
+        db.close()
+        return rowsUpdated > 0
+    }
+    fun getOrdersByTableStatus(statusId: Int): List<Order> {
+        val orders = mutableListOf<Order>()
+        val db = readableDatabase
+        val query = """
+        SELECT DonHang.id, BanAn.so_ban, DonHang.tong_tien, BanAn.id_trang_thai, DonHang.da_thanh_toan, DonHang.id_khach_hang, DonHang.ngay
+        FROM DonHang
+        JOIN BanAn ON DonHang.id_ban = BanAn.id
+        WHERE BanAn.id_trang_thai = ?
+    """
+        val cursor = db.rawQuery(query, arrayOf(statusId.toString()))
+
+        while (cursor.moveToNext()) {
+            val order = Order(
+                id = cursor.getInt(0),
+                idBan = cursor.getInt(1),
+                tongTien = cursor.getInt(2),
+                trangThai = cursor.getInt(3),
+                daThanhToan = cursor.getInt(4) ==1,
+                idKhachHang = if (cursor.isNull(5)) null else cursor.getInt(5),
+                ngay = cursor.getString(6)
+            )
+            orders.add(order)
+        }
+        cursor.close()
+        return orders
+    }
+
+    fun deleteOldOrdersForTable(tableId: Int): Boolean {
+        val db = writableDatabase
+        val rowsDeleted = db.delete("DonHang", "id_ban = ? AND da_thanh_toan = 1", arrayOf(tableId.toString()))
+        db.close()
+        return rowsDeleted > 0
+    }
 
 
 

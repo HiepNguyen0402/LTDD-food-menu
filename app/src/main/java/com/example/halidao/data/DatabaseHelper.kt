@@ -13,7 +13,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 8// Tăng version để cập nhật database
+        private const val DATABASE_VERSION = 11// Tăng version để cập nhật database
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -153,7 +153,8 @@ class DatabaseHelper(context: Context) :
                 "('Bàn đang dọn dẹp'), \n" +
                 "('Món chưa làm'), \n" +
                 "('Món đang làm'), \n" +
-                "('Món đã xong');\n")
+                "('Món đã xong'),\n" +
+                "('Đã Thanh Toán'); \n")
 // Thêm dữ liệu mẫu vào Bảng Khách Hàng
         db.execSQL("""
         INSERT INTO KhachHang (ten, sdt, email, diem_tich_luy) VALUES 
@@ -165,7 +166,7 @@ class DatabaseHelper(context: Context) :
         // Thêm dữ liệu mẫu vào Bảng Bàn Ăn
         db.execSQL("""
         INSERT INTO BanAn (so_ban, id_trang_thai) VALUES 
-        (1, 1), (2, 1), (3, 2), (4, 3), (5, 1);
+        (1, 2), (2, 2), (3, 2), (4, 1), (5, 1);
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Danh Mục Món Ăn
@@ -186,9 +187,9 @@ class DatabaseHelper(context: Context) :
         // Thêm dữ liệu mẫu vào Bảng Đơn Hàng
         db.execSQL("""
         INSERT INTO DonHang (id_ban, id_khach_hang, ngay, tong_tien, id_trang_thai, da_thanh_toan, phuong_thuc_thanh_toan) VALUES 
-        (1, 4, strftime('%s','now'), 50000, 1, 0, NULL),
+        (1, 4, strftime('%s','now'), 50000, 2, 0, NULL),
         (2, 5, strftime('%s','now'), 60000, 2, 0, NULL),
-        (3, NULL, strftime('%s','now'), 70000, 1, 0, 'Tiền mặt');
+        (3, NULL, strftime('%s','now'), 70000, 2, 0, 'Tiền mặt');
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Chi Tiết Đơn Hàng
@@ -413,21 +414,42 @@ class DatabaseHelper(context: Context) :
 
     fun updateTableStatus(tableId: Int, newStatusId: Int): Boolean {
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put("id_trang_thai", newStatusId) // ✅ Cập nhật trạng thái bàn
-        }
+        db.beginTransaction()
+        return try {
+            // ✅ Cập nhật trạng thái bàn
+            val tableValues = ContentValues().apply {
+                put("id_trang_thai", newStatusId)
+            }
+            db.update("BanAn", tableValues, "id = ?", arrayOf(tableId.toString()))
 
-        val rowsUpdated = db.update("BanAn", values, "id = ?", arrayOf(tableId.toString()))
-        db.close()
-        return rowsUpdated > 0
+            // ✅ Nếu bàn chuyển về "Trống", cập nhật trạng thái hóa đơn thành 7 (Đã thanh toán)
+            if (newStatusId == 1) { // 1 = Bàn trống
+                val orderValues = ContentValues().apply {
+                    put("id_trang_thai", 7) // ✅ Đánh dấu đơn hàng là "Đã thanh toán"
+                }
+                db.update("DonHang", orderValues, "id_ban = ? AND da_thanh_toan = 0", arrayOf(tableId.toString()))
+            }
+
+            db.setTransactionSuccessful()
+            true
+        } catch (e: Exception) {
+            false
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
     }
+
+
     fun getOrdersByTableStatus(statusId: Int): List<Order> {
         val orders = mutableListOf<Order>()
         val db = readableDatabase
         val query = """
-        SELECT DonHang.id, BanAn.so_ban, DonHang.tong_tien, BanAn.id_trang_thai, DonHang.da_thanh_toan, DonHang.id_khach_hang, DonHang.ngay
-        FROM DonHang
-        JOIN BanAn ON DonHang.id_ban = BanAn.id
+        SELECT BanAn.id, BanAn.so_ban, COALESCE(DonHang.tong_tien, 0), BanAn.id_trang_thai,
+               COALESCE(DonHang.da_thanh_toan, 0), COALESCE(DonHang.id_khach_hang, NULL),
+               COALESCE(DonHang.ngay, '')
+        FROM BanAn
+        LEFT JOIN DonHang ON BanAn.id = DonHang.id_ban AND DonHang.da_thanh_toan = 0
         WHERE BanAn.id_trang_thai = ?
     """
         val cursor = db.rawQuery(query, arrayOf(statusId.toString()))
@@ -438,7 +460,7 @@ class DatabaseHelper(context: Context) :
                 idBan = cursor.getInt(1),
                 tongTien = cursor.getInt(2),
                 trangThai = cursor.getInt(3),
-                daThanhToan = cursor.getInt(4) ==1,
+                daThanhToan = cursor.getInt(4) == 1,
                 idKhachHang = if (cursor.isNull(5)) null else cursor.getInt(5),
                 ngay = cursor.getString(6)
             )

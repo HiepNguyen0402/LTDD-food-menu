@@ -15,6 +15,7 @@ class OrderDetailActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
     private lateinit var recyclerView: RecyclerView
     private lateinit var btnAction: Button
+    private lateinit var btnAddFood: Button
     private lateinit var dbHelper: DatabaseHelper
     private var orderId: Int = -1
     private lateinit var adapter: OrderDetailAdapter
@@ -27,6 +28,7 @@ class OrderDetailActivity : AppCompatActivity() {
         tabLayout = findViewById(R.id.tabLayout)
         recyclerView = findViewById(R.id.recyclerViewOrderDetail)
         btnAction = findViewById(R.id.btnAction)
+        btnAddFood = findViewById(R.id.btnAddFood)
         orderId = intent.getIntExtra("ORDER_ID", -1)
 
         recyclerView.layoutManager = LinearLayoutManager(this)

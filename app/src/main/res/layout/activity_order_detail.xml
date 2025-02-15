@@ -1,25 +1,48 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Tab Layout -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <!-- RecyclerView hiển thị danh sách món ăn -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewOrderDetail"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_below="@id/tabLayout"
+        android:layout_above="@id/layoutButtons"/>
 
-    <Button
-        android:id="@+id/btnAction"
+    <!-- Layout chứa 2 nút ngang hàng nhau -->
+    <LinearLayout
+        android:id="@+id/layoutButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Thay đổi trạng thái"
-        android:visibility="gone"
-        android:layout_marginTop="10dp"/>
-</LinearLayout>
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btnAddFood"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Thêm món"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/btnAction"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Thay đổi trạng thái"
+            android:visibility="gone"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+</RelativeLayout>

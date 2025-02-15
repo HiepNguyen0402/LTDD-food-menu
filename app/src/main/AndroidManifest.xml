@@ -25,10 +25,11 @@
             android:name=".LoginActivity"
             android:exported="true">
         </activity>
-        <activity android:name=".EnterTableNumberActivity"/>
-        <activity android:name=".FoodActivity" />
+        <activity android:name=".customer.EnterTableNumberActivity"/>
+        <activity android:name=".customer.FoodActivity" />
         <activity android:name=".OrderActivity"/>
         <activity android:name=".OrderDetailActivity" />
+        <activity android:name=".customer.OrderFoodActivity" />
 
     </application>
 

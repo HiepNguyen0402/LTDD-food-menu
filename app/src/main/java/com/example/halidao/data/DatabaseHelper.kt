@@ -477,6 +477,4 @@ class DatabaseHelper(context: Context) :
         return rowsDeleted > 0
     }
 
-
-
 }

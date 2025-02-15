@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.halidao.customer.EnterTableNumberActivity
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {

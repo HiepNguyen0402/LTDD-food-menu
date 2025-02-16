@@ -25,12 +25,15 @@
             android:name=".LoginActivity"
             android:exported="true">
         </activity>
-        <activity android:name=".customer.EnterTableNumberActivity"/>
-        <activity android:name=".customer.FoodActivity" />
-        <activity android:name=".OrderActivity"/>
-        <activity android:name=".OrderDetailActivity" />
-        <activity android:name=".customer.OrderFoodActivity" />
+        <activity android:name=".datmon.EnterTableNumberActivity"/>
+        <activity android:name=".datmon.FoodActivity" />
+        <activity android:name=".nhanvien.OrderActivity"/>
+        <activity android:name=".nhanvien.OrderDetailActivity" />
+        <activity android:name=".admin.ManageActivity" />
+
 
     </application>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
 </manifest>

@@ -1,4 +1,4 @@
-package com.example.halidao
+package com.example.halidao.nhanvien
 
 import DatabaseHelper
 import OrderDetail
@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.halidao.R
 import com.google.android.material.tabs.TabLayout
 
 class OrderDetailActivity : AppCompatActivity() {

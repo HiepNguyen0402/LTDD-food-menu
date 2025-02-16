@@ -39,6 +39,8 @@ android {
 }
 
 dependencies {
+    implementation ("com.sun.mail:android-mail:1.6.2")
+    implementation ("com.sun.mail:android-activation:1.6.2")
     implementation("org.apache.poi:poi-ooxml-lite:5.2.3")
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation ("org.apache.poi:poi:5.2.3")

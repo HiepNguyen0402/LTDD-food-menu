@@ -85,56 +85,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="80dp"/>
-
-    <Button
-        android:id="@+id/btn_update_status"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Cập nhật trạng thái"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnViewOrders"
-        android:layout_marginTop="20dp"/>
-
-    <Button
-        android:id="@+id/btn_confirm_payment"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Xác nhận thanh toán"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_update_status"
-        android:layout_marginTop="20dp"/>
-
     <!-- Khách hàng -->
-    <Button
-        android:id="@+id/btn_view_menu"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Xem thực đơn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="80dp"/>
 
-    <Button
-        android:id="@+id/btn_order_at_table"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Đặt món tại bàn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_view_menu"
-        android:layout_marginTop="20dp"/>
-
-    <Button
-        android:id="@+id/btn_view_order_status"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Xem trạng thái đơn hàng"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_order_at_table"
-        android:layout_marginTop="20dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

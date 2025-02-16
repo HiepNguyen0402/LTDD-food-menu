@@ -1,6 +1,7 @@
 package com.example.halidao
 
 import DatabaseHelper
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -12,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -134,6 +136,15 @@ class ManageStatisticsFragment : Fragment() {
         lineChart.invalidate()
     }
     private fun exportToExcel() {
+        // Lấy email từ SharedPreferences
+        val sharedPref = requireActivity().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+        val userEmail = sharedPref.getString("email", null)
+
+        if (userEmail.isNullOrEmpty()) {
+            Toast.makeText(requireContext(), "Không tìm thấy email của bạn. Hãy đăng nhập lại!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         try {
             val workbook = XSSFWorkbook()
             val sheet = workbook.createSheet("Thống kê doanh thu")
@@ -151,20 +162,20 @@ class ManageStatisticsFragment : Fragment() {
                 row.createCell(1).setCellValue(data.revenue.toDouble())
             }
 
-            // Lưu file Excel
+            // Lưu file vào thư mục an toàn
             val folder = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "ThongKe")
             if (!folder.exists()) folder.mkdirs()
             val file = File(folder, "ThongKe_DoanhThu.xlsx")
 
-            val fileOutputStream = FileOutputStream(file)
-            workbook.write(fileOutputStream)
-            fileOutputStream.close()
+            FileOutputStream(file).use { fos ->
+                workbook.write(fos)
+            }
             workbook.close()
 
             Toast.makeText(requireContext(), "Đã xuất file Excel: ${file.absolutePath}", Toast.LENGTH_LONG).show()
 
             // Gửi file qua Gmail
-            sendEmailWithAttachment(file)
+            sendEmailWithAttachment(userEmail, file)
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -172,18 +183,27 @@ class ManageStatisticsFragment : Fragment() {
         }
     }
 
-    private fun sendEmailWithAttachment(file: File) {
-        val uri = Uri.fromFile(file)
+    private fun sendEmailWithAttachment(email: String, file: File) {
+        val uri = FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.provider",
+            file
+        )
 
         val emailIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/vnd.ms-excel"
-            putExtra(Intent.EXTRA_EMAIL, arrayOf("email@example.com")) // Thay email người nhận
+            type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
             putExtra(Intent.EXTRA_SUBJECT, "Báo cáo doanh thu")
             putExtra(Intent.EXTRA_TEXT, "Gửi bạn báo cáo doanh thu theo tháng.")
             putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        startActivity(Intent.createChooser(emailIntent, "Gửi email..."))
+        try {
+            startActivity(Intent.createChooser(emailIntent, "Gửi email..."))
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Không tìm thấy ứng dụng email!", Toast.LENGTH_SHORT).show()
+        }
     }
 
 }

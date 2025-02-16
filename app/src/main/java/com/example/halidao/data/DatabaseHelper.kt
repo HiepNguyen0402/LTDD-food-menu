@@ -3,6 +3,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import com.example.halidao.data.model.GioHangItem
 import com.example.halidao.data.model.MenuItem
 import com.example.halidao.data.model.Staff
 import com.example.halidao.data.model.Statistics
@@ -15,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 15// Tăng version để cập nhật database
+        private const val DATABASE_VERSION = 16// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -125,7 +126,16 @@ class DatabaseHelper(context: Context) :
             FOREIGN KEY (id_role) REFERENCES Role(id) ON DELETE SET NULL
         );
     """)
-
+        db.execSQL("""
+    CREATE TABLE GioHang (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_mon_an INTEGER NOT NULL,
+        ten_mon TEXT NOT NULL,
+        so_tien INTEGER NOT NULL,
+        so_luong INTEGER NOT NULL DEFAULT 1,
+        FOREIGN KEY (id_mon_an) REFERENCES MonAn(id) ON DELETE CASCADE
+    );
+""")
         // Thêm tài khoản quản trị viên mặc định
         db.execSQL("""
             INSERT INTO Role (ten_role) VALUES ('Quản lý'), ('Nhân viên');
@@ -225,7 +235,56 @@ class DatabaseHelper(context: Context) :
         db.execSQL("DROP TABLE IF EXISTS ThanhToan")
         db.execSQL("DROP TABLE IF EXISTS Role")
         db.execSQL("DROP TABLE IF EXISTS NhanVien")
+        db.execSQL("DROP TABLE IF EXISTS GioHang")
         onCreate(db) // Gọi lại để tạo bảng mới
+    }
+    // Thêm món vào giỏ hàng
+    fun addToCart(monAn: MenuItem) {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("id_mon_an", monAn.id)
+            put("ten_mon", monAn.tenMon)
+            put("so_tien", monAn.gia)
+            put("so_luong", 1)
+        }
+        db.insert("GioHang", null, values)
+        db.close()
+    }
+
+    // Lấy danh sách món trong giỏ hàng
+    fun getCartItems(): List<GioHangItem> {
+        val cartItems = mutableListOf<GioHangItem>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM GioHang", null)
+
+        while (cursor.moveToNext()) {
+            val gioHangItem = GioHangItem(
+                id = cursor.getInt(0),       // ID của giỏ hàng (tự động tăng)
+                idMonAn = cursor.getInt(1),  // ID của món ăn
+                tenMon = cursor.getString(2), // Tên món ăn
+                soTien = cursor.getInt(3),   // Giá tiền
+                soLuong = cursor.getInt(4)   // Số lượng món ăn
+            )
+            cartItems.add(gioHangItem)
+        }
+
+        cursor.close()
+        db.close()
+        return cartItems
+    }
+
+    // Xóa món khỏi giỏ hàng
+    fun removeFromCart(idMonAn: Int) {
+        val db = writableDatabase
+        db.delete("GioHang", "id_mon_an=?", arrayOf(idMonAn.toString()))
+        db.close()
+    }
+
+    // Xóa toàn bộ giỏ hàng khi xác nhận đơn
+    fun clearCart() {
+        val db = writableDatabase
+        db.delete("GioHang", null, null)
+        db.close()
     }
 
     fun getAllOrders(): List<Order> {
@@ -286,8 +345,6 @@ class DatabaseHelper(context: Context) :
         return orders
     }
 
-
-
     fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int): Boolean {
         val db = writableDatabase
 
@@ -305,7 +362,6 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsUpdated > 0
     }
-
 
     fun payOrder(orderId: Int, amount: Int, paymentMethod: String): Boolean {
         val db = writableDatabase
@@ -335,6 +391,7 @@ class DatabaseHelper(context: Context) :
             db.close()
         }
     }
+
     fun markOrderAsPaid(orderId: Int): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -344,6 +401,7 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsUpdated > 0
     }
+
     fun insertOrder(idBan: Int, idKhachHang: Int?, tongTien: Int, trangThai: Int): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -369,6 +427,7 @@ class DatabaseHelper(context: Context) :
             db.close()
         }
     }
+
     fun getOrderDetailsByStatus(orderId: Int, status: Int): List<OrderDetail> {
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
@@ -418,7 +477,6 @@ class DatabaseHelper(context: Context) :
         return menuItems
     }
 
-
     fun updateTableStatus(tableId: Int, newStatusId: Int): Boolean {
         val db = writableDatabase
         db.beginTransaction()
@@ -446,7 +504,6 @@ class DatabaseHelper(context: Context) :
             db.close()
         }
     }
-
 
     fun getOrdersByTableStatus(statusId: Int): List<Order> {
         val orders = mutableListOf<Order>()
@@ -483,12 +540,14 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsDeleted > 0
     }
+
     fun deleteFood(foodId: Int): Boolean {
         val db = writableDatabase
         val rowsDeleted = db.delete("MonAn", "id = ?", arrayOf(foodId.toString()))
         db.close()
         return rowsDeleted > 0
     }
+
     fun updateFood(foodId: Int, newName: String, newPrice: Int): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -499,6 +558,7 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsUpdated > 0
     }
+
     fun insertFood(food: MenuItem): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -509,6 +569,7 @@ class DatabaseHelper(context: Context) :
         }
         return db.insert("MonAn", null, values)
     }
+
     fun getRevenueStatistics(): List<Statistics> {
         val statisticsList = mutableListOf<Statistics>()
         val db = readableDatabase
@@ -539,6 +600,7 @@ class DatabaseHelper(context: Context) :
         db.close()
         return totalRevenue
     }
+
     fun getTotalOrders(): Int {
         val db = readableDatabase
         val cursor = db.rawQuery("SELECT COUNT(*) FROM DonHang", null)
@@ -612,6 +674,7 @@ class DatabaseHelper(context: Context) :
         cursor.close()
         return staffList
     }
+
     fun insertStaff(staff: Staff): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -646,5 +709,25 @@ class DatabaseHelper(context: Context) :
         return result > 0
     }
 
+    fun insertDonHang(idBan: Int, ngay: Long, tongTien: Int): Long {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("id_ban", idBan)
+            put("ngay", ngay)
+            put("tong_tien", tongTien)
+        }
+        return db.insert("DonHang", null, values)
+    }
+
+    fun insertChiTietDonHang(idDonHang: Int, idMonAn: Int, soLuong: Int, gia: Int) {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("id_don_hang", idDonHang)
+            put("id_mon_an", idMonAn)
+            put("so_luong", soLuong)
+            put("gia", gia)
+        }
+        db.insert("ChiTietDonHang", null, values)
+    }
 
 }

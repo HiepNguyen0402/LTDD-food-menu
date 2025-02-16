@@ -49,7 +49,9 @@ dependencies {
     kapt(libs.glide.compiler)
     implementation ("com.github.bumptech.glide:glide:4.15.1") // Hoặc phiên bản mới nhất
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
-    // Các thư viện khác
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.livedata.ktx)
+    implementation(libs.lifecycle.runtime.ktx)
     implementation("androidx.room:room-runtime:2.5.2")
     kapt("androidx.room:room-compiler:2.5.2")
     implementation("androidx.room:room-ktx:2.5.2")

@@ -50,7 +50,6 @@ class EnterTableNumberActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this, "Bàn không tồn tại!", Toast.LENGTH_SHORT).show()
                 }
-
                 cursor.close()
                 db.close()
             }

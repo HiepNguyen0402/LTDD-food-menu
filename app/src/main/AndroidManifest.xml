@@ -27,6 +27,7 @@
         </activity>
         <activity android:name=".datmon.EnterTableNumberActivity"/>
         <activity android:name=".datmon.FoodActivity" />
+        <activity android:name=".datmon.CartActivity" />
         <activity android:name=".nhanvien.OrderActivity"/>
         <activity android:name=".nhanvien.OrderDetailActivity" />
         <activity android:name=".admin.ManageActivity" />

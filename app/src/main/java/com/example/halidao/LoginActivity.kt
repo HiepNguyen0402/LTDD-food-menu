@@ -35,6 +35,7 @@ class LoginActivity : AppCompatActivity() {
                 with(sharedPref.edit()) {
                     putString("name", user.first) // Lưu tên nhân viên
                     putString("role", user.second)    // Lưu tên role
+                    putString("email", user.third)
                     apply() // Lưu thay đổi
                 }
                 Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
@@ -45,10 +46,10 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
-    fun checkLogin(username: String, password: String): Pair<String, String>? {
+    fun checkLogin(username: String, password: String): Triple<String, String, String>? {
         val db = dbHelper.readableDatabase
         val query = """
-        SELECT NhanVien.ten, Role.ten_role 
+        SELECT NhanVien.ten, Role.ten_role, NhanVien.email
         FROM NhanVien 
         INNER JOIN Role ON NhanVien.id_role = Role.id
         WHERE (NhanVien.sdt = ? OR NhanVien.email = ?) 
@@ -56,13 +57,15 @@ class LoginActivity : AppCompatActivity() {
     """
         val cursor = db.rawQuery(query, arrayOf(username, username, password))
 
-        var user: Pair<String, String>? = null
+        var user: Triple<String, String, String>? = null
         if (cursor.moveToFirst()) {
             val ten = cursor.getString(0)
             val tenRole = cursor.getString(1)
-            user = Pair(ten, tenRole)
+            val email = cursor.getString(2) ?: "" // Nếu email NULL, gán giá trị rỗng
+            user = Triple(ten, tenRole, email)
         }
         cursor.close()
         return user
     }
+
 }

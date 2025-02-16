@@ -1,4 +1,4 @@
-package com.example.halidao
+package com.example.halidao.nhanvien
 
 import Order
 import android.view.LayoutInflater
@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.halidao.R
 
 class OrderAdapter(
     private var orders: List<Order>,

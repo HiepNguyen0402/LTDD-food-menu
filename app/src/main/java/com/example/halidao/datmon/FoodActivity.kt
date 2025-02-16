@@ -1,4 +1,4 @@
-package com.example.halidao
+package com.example.halidao.datmon
 
 import DatabaseHelper
 import android.os.Bundle
@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.halidao.R
 import com.example.halidao.data.model.MenuItem
 
 class FoodActivity : AppCompatActivity() {

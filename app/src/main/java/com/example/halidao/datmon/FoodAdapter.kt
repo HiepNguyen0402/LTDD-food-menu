@@ -1,4 +1,4 @@
-package com.example.halidao
+package com.example.halidao.datmon
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.halidao.R
 import com.example.halidao.data.model.MenuItem
 
 class FoodAdapter(private val context: Context, private val foodList: List<MenuItem>) : RecyclerView.Adapter<FoodAdapter.FoodViewHolder>() {

@@ -1,0 +1,80 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+
+    <!-- Nhập thông tin món ăn -->
+    <EditText
+        android:id="@+id/edtFoodName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Tên món ăn"
+        android:padding="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <EditText
+        android:id="@+id/edtFoodPrice"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Giá món ăn"
+        android:inputType="number"
+        android:padding="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edtFoodName"/>
+
+    <EditText
+        android:id="@+id/edtFoodCategory"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Danh mục món ăn"
+        android:padding="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edtFoodPrice"/>
+
+    <EditText
+        android:id="@+id/edtFoodImage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Tên file hình ảnh (ví dụ: pizza.jpg)"
+        android:padding="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edtFoodCategory"/>
+
+    <!-- Nút Thêm / Cập nhật món -->
+    <Button
+        android:id="@+id/btnSaveFood"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Thêm món"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/edtFoodImage"/>
+
+    <!-- Nút Xóa món -->
+    <Button
+        android:id="@+id/btnDeleteFood"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Xóa món"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnSaveFood"/>
+
+    <!-- Danh sách món ăn -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewFood"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnDeleteFood"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

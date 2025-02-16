@@ -1,4 +1,4 @@
-package com.example.halidao
+package com.example.halidao.datmon
 
 import DatabaseHelper
 import android.content.Intent
@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.halidao.R
 
 class EnterTableNumberActivity : AppCompatActivity() {
 

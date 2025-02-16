@@ -6,6 +6,9 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.halidao.admin.ManageActivity
+import com.example.halidao.datmon.EnterTableNumberActivity
+import com.example.halidao.nhanvien.OrderActivity
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -13,7 +16,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnViewMenuList: Button
     // Admin
     private lateinit var btnManageFood: Button
-    private lateinit var btnManageStaff: Button
 //    private lateinit var btnRevenue: Button
 
 
@@ -26,20 +28,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnViewMenu: Button
     private lateinit var btnOrderAtTable: Button
     private lateinit var btnViewOrderStatus: Button
+    private lateinit var btnManage: Button
 
     private var userRole: String? = null  // Lưu vai trò của người dùng
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        btnManage = findViewById(R.id.btn_manage)
 
         // Ánh xạ các button từ XML
-//        btnLogin = findViewById(R.id.btn_login)
         btnLogin = findViewById(R.id.btn_login)
         // Admin
         btnManageFood = findViewById(R.id.btn_manage_food)
-        btnManageStaff = findViewById(R.id.btn_manage_staff)
-//        btnRevenue = findViewById(R.id.btn_revenue)
         btnViewOrderStatus = findViewById(R.id.btn_view_order_status)
         // Nhân viên
         btnUpdateStatus = findViewById(R.id.btn_update_status)
@@ -70,7 +71,6 @@ class MainActivity : AppCompatActivity() {
         when (userRole) {
             "admin" -> {
                 btnManageFood.visibility = View.VISIBLE
-                btnManageStaff.visibility = View.VISIBLE
 //                btnRevenue.visibility = View.VISIBLE
                 btnUpdateStatus.visibility = View.GONE
                 btnConfirmPayment.visibility = View.GONE
@@ -79,10 +79,11 @@ class MainActivity : AppCompatActivity() {
                 btnOrderAtTable.visibility = View.GONE
                 btnViewOrderStatus.visibility = View.GONE
                 btnViewMenuList.visibility = View.VISIBLE
+                btnManage.visibility = View.VISIBLE
+
             }
             "staff" -> {
                 btnManageFood.visibility = View.GONE
-                btnManageStaff.visibility = View.GONE
 //                btnRevenue.visibility = View.GONE
                 btnUpdateStatus.visibility = View.VISIBLE
                 btnConfirmPayment.visibility = View.VISIBLE
@@ -91,10 +92,11 @@ class MainActivity : AppCompatActivity() {
                 btnOrderAtTable.visibility = View.GONE
                 btnViewOrderStatus.visibility = View.GONE
                 btnViewMenuList.visibility = View.VISIBLE
+                btnManage.visibility = View.VISIBLE
+
             }
             "customer" -> {
                 btnManageFood.visibility = View.GONE
-                btnManageStaff.visibility = View.GONE
 //                btnRevenue.visibility = View.GONE
                 btnUpdateStatus.visibility = View.GONE
                 btnConfirmPayment.visibility = View.GONE
@@ -103,12 +105,12 @@ class MainActivity : AppCompatActivity() {
                 btnViewOrderStatus.visibility = View.VISIBLE
                 btnViewOrders.visibility = View.VISIBLE
 //                btnViewMenuList.visibility = View.VISIBLE
+                btnManage.visibility = View.VISIBLE
 
             }
             else -> {
                 // Nếu chưa đăng nhập, ẩn hết nút trừ đăng nhập
                 btnManageFood.visibility = View.GONE
-                btnManageStaff.visibility = View.GONE
 //                btnRevenue.visibility = View.GONE
                 btnUpdateStatus.visibility = View.GONE
                 btnConfirmPayment.visibility = View.GONE
@@ -117,6 +119,7 @@ class MainActivity : AppCompatActivity() {
                 btnOrderAtTable.visibility = View.GONE
                 btnViewOrderStatus.visibility = View.GONE
                 btnViewMenuList.visibility = View.VISIBLE
+                btnManage.visibility = View.VISIBLE
             }
         }
     }
@@ -134,40 +137,9 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, EnterTableNumberActivity::class.java)
             startActivity(intent)
         }
-//        btnManageFood.setOnClickListener {
-//            startActivity(Intent(this, ManageFoodActivity::class.java))
-//        }
-//
-//        btnManageStaff.setOnClickListener {
-//            startActivity(Intent(this, ManageStaffActivity::class.java))
-//        }
-//
-//        btnRevenue.setOnClickListener {
-//            startActivity(Intent(this, RevenueActivity::class.java))
-//        }
-//
-//        btnProcessOrder.setOnClickListener {
-//            startActivity(Intent(this, ProcessOrderActivity::class.java))
-//        }
-//
-//        btnUpdateStatus.setOnClickListener {
-//            startActivity(Intent(this, UpdateStatusActivity::class.java))
-//        }
-//
-//        btnConfirmPayment.setOnClickListener {
-//            startActivity(Intent(this, ConfirmPaymentActivity::class.java))
-//        }
-//
-//        btnViewMenu.setOnClickListener {
-//            startActivity(Intent(this, ViewMenuActivity::class.java))
-//        }
-//
-//        btnOrderAtTable.setOnClickListener {
-//            startActivity(Intent(this, OrderAtTableActivity::class.java))
-//        }
-//
-//        btnViewOrderStatus.setOnClickListener {
-//            startActivity(Intent(this, ViewOrderStatusActivity::class.java))
-//        }
+        btnManage.setOnClickListener {
+            startActivity(Intent(this, ManageActivity::class.java))
+        }
+
     }
 }

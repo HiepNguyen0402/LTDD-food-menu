@@ -4,6 +4,8 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.halidao.data.model.MenuItem
+import com.example.halidao.data.model.Staff
+import com.example.halidao.data.model.Statistics
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -481,7 +483,168 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsDeleted > 0
     }
+    fun deleteFood(foodId: Int): Boolean {
+        val db = writableDatabase
+        val rowsDeleted = db.delete("MonAn", "id = ?", arrayOf(foodId.toString()))
+        db.close()
+        return rowsDeleted > 0
+    }
+    fun updateFood(foodId: Int, newName: String, newPrice: Int): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("ten_mon", newName)
+            put("so_tien", newPrice)
+        }
+        val rowsUpdated = db.update("MonAn", values, "id = ?", arrayOf(foodId.toString()))
+        db.close()
+        return rowsUpdated > 0
+    }
+    fun insertFood(food: MenuItem): Long {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("ten_mon", food.tenMon)
+            put("so_tien", food.gia)
+            put("id_danh_muc", 1) // Mặc định danh mục ID = 1
+            put("hinh_anh", food.hinhAnh)
+        }
+        return db.insert("MonAn", null, values)
+    }
+    fun getRevenueStatistics(): List<Statistics> {
+        val statisticsList = mutableListOf<Statistics>()
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT strftime('%Y-%m', ngay) AS month, COALESCE(SUM(tong_tien), 0) FROM DonHang GROUP BY month ORDER BY month DESC",
+            null
+        )
 
+        while (cursor.moveToNext()) {
+            val month = cursor.getString(0) ?: "N/A"  // Nếu null, trả về "N/A"
+            val revenue = cursor.getInt(1)            // Nếu SUM() null, COALESCE sẽ trả về 0
+            statisticsList.add(Statistics(month, revenue))
+        }
+
+        cursor.close()
+        db.close()
+        return statisticsList
+    }
+
+    fun getTotalRevenue(): Int {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT SUM(tong_tien) FROM DonHang", null)
+        var totalRevenue = 0
+        if (cursor.moveToFirst()) {
+            totalRevenue = cursor.getInt(0)
+        }
+        cursor.close()
+        db.close()
+        return totalRevenue
+    }
+    fun getTotalOrders(): Int {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT COUNT(*) FROM DonHang", null)
+        var totalOrders = 0
+        if (cursor.moveToFirst()) {
+            totalOrders = cursor.getInt(0)
+        }
+        cursor.close()
+        db.close()
+        return totalOrders
+    }
+
+    fun getRevenueByCategory(): Map<String, Int> {
+        val revenueMap = mutableMapOf<String, Int>()
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT DanhMuc.danh_muc, SUM(DonHang.tong_tien) FROM DonHang " +
+                    "JOIN ChiTietDonHang ON DonHang.id = ChiTietDonHang.id_don_hang " +
+                    "JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id " +
+                    "JOIN DanhMuc ON MonAn.id_danh_muc = DanhMuc.id " +
+                    "GROUP BY DanhMuc.danh_muc",
+            null
+        )
+
+        while (cursor.moveToNext()) {
+            val category = cursor.getString(0)
+            val revenue = cursor.getInt(1)
+            revenueMap[category] = revenue
+        }
+
+        cursor.close()
+        db.close()
+        return revenueMap
+    }
+
+    fun getDailyRevenue(): List<Pair<String, Int>> {
+        val dailyRevenueList = mutableListOf<Pair<String, Int>>()
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT strftime('%Y-%m-%d', ngay), SUM(tong_tien) FROM DonHang GROUP BY strftime('%Y-%m-%d', ngay)",
+            null
+        )
+
+        while (cursor.moveToNext()) {
+            val date = cursor.getString(0)
+            val revenue = cursor.getInt(1)
+            dailyRevenueList.add(Pair(date, revenue))
+        }
+
+        cursor.close()
+        db.close()
+        return dailyRevenueList
+    }
+
+    fun getAllStaff(): List<Staff> {
+        val staffList = mutableListOf<Staff>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT id, ten, sdt, email, mat_khau, id_role FROM NhanVien", null)
+
+        while (cursor.moveToNext()) {
+            val staff = Staff(
+                id = cursor.getInt(0),
+                ten = cursor.getString(1),
+                sdt = cursor.getString(2),
+                email = cursor.getString(3),
+                matKhau = cursor.getString(4),
+                idRole = cursor.getInt(5)
+            )
+            staffList.add(staff)
+        }
+        cursor.close()
+        return staffList
+    }
+    fun insertStaff(staff: Staff): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("ten", staff.ten)
+            put("sdt", staff.sdt)
+            put("email", staff.email)
+            put("mat_khau", staff.matKhau)
+            put("id_role", staff.idRole)
+        }
+        val result = db.insert("NhanVien", null, values)
+        db.close()
+        return result != -1L
+    }
+
+    fun updateStaff(id: Int, name: String, phone: String, email: String, roleId: Int): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("ten", name)
+            put("sdt", phone)
+            put("email", email)
+            put("id_role", roleId)
+        }
+        val result = db.update("NhanVien", values, "id = ?", arrayOf(id.toString()))
+        db.close()
+        return result > 0
+    }
+
+    fun deleteStaff(id: Int): Boolean {
+        val db = writableDatabase
+        val result = db.delete("NhanVien", "id = ?", arrayOf(id.toString()))
+        db.close()
+        return result > 0
+    }
 
 
 }

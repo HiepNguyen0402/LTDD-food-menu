@@ -1,0 +1,86 @@
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"> <!-- Đảm bảo NestedScrollView chiếm toàn màn hình -->
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp">
+
+        <!-- Hiển thị tổng doanh thu -->
+        <TextView
+            android:id="@+id/txtTotalRevenue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Tổng doanh thu: 0 VND"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:padding="10dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Hiển thị tổng số đơn hàng -->
+        <TextView
+            android:id="@+id/txtTotalOrders"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Tổng số đơn hàng: 0"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:padding="10dp"
+            app:layout_constraintTop_toBottomOf="@id/txtTotalRevenue"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Danh sách thống kê -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewStatistics"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            app:layout_constraintTop_toBottomOf="@id/txtTotalOrders"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Biểu đồ cột -->
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/barChartStatistics"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            app:layout_constraintTop_toBottomOf="@id/recyclerViewStatistics"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Biểu đồ tròn -->
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/pieChartStatistics"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            app:layout_constraintTop_toBottomOf="@id/barChartStatistics"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Biểu đồ đường -->
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/lineChartStatistics"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            app:layout_constraintTop_toBottomOf="@id/pieChartStatistics"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Nút Xuất Excel -->
+        <Button
+            android:id="@+id/btnExportExcel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Xuất Excel và Gửi Mail"
+            app:layout_constraintTop_toBottomOf="@id/lineChartStatistics"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,4 +1,4 @@
-package com.example.halidao
+package com.example.halidao.nhanvien
 
 import OrderDetail
 import android.view.LayoutInflater
@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.halidao.R
 
 class OrderDetailAdapter(private val orderDetails: List<OrderDetail>) :
     RecyclerView.Adapter<OrderDetailAdapter.OrderDetailViewHolder>() {

@@ -26,6 +26,7 @@ import com.github.mikephil.charting.data.*
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
+import com.example.halidao.R
 
 class ManageStatisticsFragment : Fragment() {
 

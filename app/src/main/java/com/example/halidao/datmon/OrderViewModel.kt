@@ -62,6 +62,7 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
                     items.forEach { item ->
                         dbHelper.insertChiTietDonHang(idDonHang.toInt(), item.idMonAn, item.soLuong, item.soTien)
                     }
+                    
                     // update trạng thái bàn
                     dbHelper.updateTableStatus(idBan, 2)
                     // Bước 3: Xóa giỏ hàng

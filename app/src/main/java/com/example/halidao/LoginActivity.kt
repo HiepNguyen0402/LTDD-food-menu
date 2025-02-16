@@ -28,7 +28,15 @@ class LoginActivity : AppCompatActivity() {
             val username = edtUsername.text.toString().trim()
             val password = edtPassword.text.toString().trim()
 
-            if (checkLogin(username, password)) {
+            val user = checkLogin(username, password) // Lấy thông tin user từ DB
+
+            if (user != null) { // Nếu đăng nhập thành công
+                val sharedPref = getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                with(sharedPref.edit()) {
+                    putString("name", user.first) // Lưu tên nhân viên
+                    putString("role", user.second)    // Lưu tên role
+                    apply() // Lưu thay đổi
+                }
                 Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
@@ -37,17 +45,24 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
-    fun checkLogin(username: String, password: String): Boolean {
+    fun checkLogin(username: String, password: String): Pair<String, String>? {
         val db = dbHelper.readableDatabase
         val query = """
-        SELECT * FROM NhanVien 
-        WHERE (sdt = ? OR email = ?) 
-        AND mat_khau = ?
+        SELECT NhanVien.ten, Role.ten_role 
+        FROM NhanVien 
+        INNER JOIN Role ON NhanVien.id_role = Role.id
+        WHERE (NhanVien.sdt = ? OR NhanVien.email = ?) 
+        AND NhanVien.mat_khau = ?
     """
         val cursor = db.rawQuery(query, arrayOf(username, username, password))
 
-        val isValid = cursor.count > 0
+        var user: Pair<String, String>? = null
+        if (cursor.moveToFirst()) {
+            val ten = cursor.getString(0)
+            val tenRole = cursor.getString(1)
+            user = Pair(ten, tenRole)
+        }
         cursor.close()
-        return isValid
+        return user
     }
 }

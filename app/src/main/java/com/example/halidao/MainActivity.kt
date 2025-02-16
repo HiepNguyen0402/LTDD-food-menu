@@ -4,12 +4,15 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var btnLogin: Button
+//    private lateinit var btnLogin: Button
+    private lateinit var btnLogout: Button
     private lateinit var btnViewMenuList: Button
     // Admin
     private lateinit var btnManageFood: Button
@@ -35,7 +38,7 @@ class MainActivity : AppCompatActivity() {
 
         // Ánh xạ các button từ XML
 //        btnLogin = findViewById(R.id.btn_login)
-        btnLogin = findViewById(R.id.btn_login)
+        btnLogout = findViewById(R.id.btn_logout)
         // Admin
         btnManageFood = findViewById(R.id.btn_manage_food)
         btnManageStaff = findViewById(R.id.btn_manage_staff)
@@ -51,11 +54,30 @@ class MainActivity : AppCompatActivity() {
         btnOrderAtTable = findViewById(R.id.btn_order_at_table)
         btnViewMenuList = findViewById(R.id.btn_view_menu_list)
 
+        // check login
+        checkUserSession()
         // Lấy role của người dùng từ database
         getUserRole()
 
         // Xử lý khi bấm vào các nút
         setupClickListeners()
+    }
+
+    private fun checkUserSession() {
+        val sharedPref = getSharedPreferences("UserPrefs", MODE_PRIVATE)
+        val name = sharedPref.getString("name", null)
+        val role = sharedPref.getString("role", null)
+        print("check")
+        val tvUserInfo = findViewById<TextView>(R.id.tv_user_info)
+        if (!name.isNullOrEmpty() && !role.isNullOrEmpty()) {
+            userRole = role
+            tvUserInfo.text = "Tên: $name | Vai trò: $role"
+            updateUIBasedOnRole()
+        } else {
+            userRole = null
+            updateUIBasedOnRole()
+            startActivity(Intent(this, LoginActivity::class.java))
+        }
     }
 
     private fun getUserRole() {
@@ -122,8 +144,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnLogin.setOnClickListener {
-            startActivity(Intent(this, LoginActivity::class.java))
+        btnLogout.setOnClickListener {
+            // Xóa dữ liệu SharedPreferences
+            val sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            sharedPreferences.edit().clear().apply()
+
+            // Hiển thị thông báo đăng xuất
+            Toast.makeText(this, "Đăng xuất thành công", Toast.LENGTH_SHORT).show()
+
+            // Chuyển đến màn hình đăng nhập
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK // Xóa tất cả activity trước đó
+            startActivity(intent)
         }
 
         btnViewOrders.setOnClickListener {

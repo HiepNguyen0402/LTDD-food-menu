@@ -13,7 +13,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 11// Tăng version để cập nhật database
+        private const val DATABASE_VERSION = 15// Tăng version để cập nhật database
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -126,13 +126,18 @@ class DatabaseHelper(context: Context) :
 
         // Thêm tài khoản quản trị viên mặc định
         db.execSQL("""
-            INSERT INTO Role (ten_role) VALUES ('Quản lý'), ('Nhân viên phục vụ'), ('Bếp'), ('Thu ngân');
+            INSERT INTO Role (ten_role) VALUES ('Quản lý'), ('Nhân viên');
         """)
 
         db.execSQL("""
             INSERT INTO NhanVien (ten, sdt, email, mat_khau, id_role) 
             VALUES ('Admin', '0123456789', 'admin@example.com', '123456', 
                 (SELECT id FROM Role WHERE ten_role = 'Quản lý' LIMIT 1));
+        """)
+        db.execSQL("""
+            INSERT INTO NhanVien (ten, sdt, email, mat_khau, id_role)
+            VALUES ('User1', '0987654321', 'user1@example.com', '123456', 
+            (SELECT id FROM Role WHERE ten_role = 'Nhân viên' LIMIT 1));
         """)
         // Bảng Thanh Toán
         db.execSQL("""

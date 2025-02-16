@@ -28,7 +28,7 @@ class FoodActivity : AppCompatActivity() {
         tvTableNumber = findViewById(R.id.tvTableNumber)
         tvTableNumber.text = "Bàn số: $tableNumber"
 
-        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView = findViewById(R.id.recyclerViewFood)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         databaseHelper = DatabaseHelper(this)

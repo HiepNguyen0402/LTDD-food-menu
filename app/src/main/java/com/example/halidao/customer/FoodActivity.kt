@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.halidao.OrderActivity
 import com.example.halidao.R
 import com.example.halidao.data.model.MenuItem
 

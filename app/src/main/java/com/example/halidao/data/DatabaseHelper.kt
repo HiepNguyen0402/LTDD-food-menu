@@ -534,7 +534,6 @@ class DatabaseHelper(context: Context) :
         db.close()
         return totalRevenue
     }
-
     fun getTotalOrders(): Int {
         val db = readableDatabase
         val cursor = db.rawQuery("SELECT COUNT(*) FROM DonHang", null)
@@ -641,5 +640,6 @@ class DatabaseHelper(context: Context) :
         db.close()
         return result > 0
     }
+
 
 }

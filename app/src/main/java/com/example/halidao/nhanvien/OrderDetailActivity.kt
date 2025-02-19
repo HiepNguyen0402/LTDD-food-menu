@@ -2,7 +2,9 @@ package com.example.halidao.nhanvien
 
 import DatabaseHelper
 import OrderDetail
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -11,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.halidao.R
 import com.google.android.material.tabs.TabLayout
+import com.example.halidao.datmon.FoodActivity
 
 class OrderDetailActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
@@ -57,6 +60,12 @@ class OrderDetailActivity : AppCompatActivity() {
                 1 -> updateOrderStatus(5, 6) // Chuyển từ "Đang làm" -> "Đã xong"
                 2 -> processPayment() // Thanh toán khi ở tab "Đã xong"
             }
+        }
+        btnAddFood.setOnClickListener {
+            val tableNumber = intent.getIntExtra("ID_BAN",-1)
+            val intent = Intent(this, FoodActivity::class.java) // Chuyển sang FoodActivity
+            intent.putExtra("TABLE_NUMBER", tableNumber.toString())  // Truyền số bàn qua FoodActivity
+            startActivity(intent)  // Chuyển Activity
         }
     }
 

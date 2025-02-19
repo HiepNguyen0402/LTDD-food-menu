@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -23,6 +24,7 @@ class FoodAdapter(
         val btnGiam: Button = itemView.findViewById(R.id.btnDecrease)
         val btnTang: Button = itemView.findViewById(R.id.btnIncrease)
         val soLuong: TextView = itemView.findViewById(R.id.foodQuantity)
+        val imageView: ImageView = itemView.findViewById(R.id.foodImage)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuViewHolder {
@@ -37,6 +39,15 @@ class FoodAdapter(
         holder.tenMon.text = monAn.tenMon
         holder.gia.text = "${monAn.gia} VNĐ"
         holder.soLuong.text = quantity.toString()
+
+        val resourceId = holder.itemView.context.resources.getIdentifier(
+            monAn.hinhAnh, "drawable", holder.itemView.context.packageName
+        )
+        if (resourceId != 0) {
+            holder.imageView.setImageResource(resourceId)
+        } else {
+            holder.imageView.setImageResource(R.drawable.macdinh) // Nếu không tìm thấy ảnh, dùng ảnh mặc định
+        }
 
         // Cập nhật trạng thái nút "-"
         holder.btnGiam.isEnabled = quantity > 0

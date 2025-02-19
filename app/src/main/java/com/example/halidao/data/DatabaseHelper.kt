@@ -16,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 16// Tăng version để cập nhật da tabase
+        private const val DATABASE_VERSION = 17// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -195,10 +195,10 @@ class DatabaseHelper(context: Context) :
         // Thêm dữ liệu mẫu vào Bảng Món Ăn
         db.execSQL("""
         INSERT INTO MonAn (id_danh_muc, ten_mon, so_tien, hinh_anh) VALUES 
-        (1, 'Mì xào', 50000, 'mi_xao.jpg'),
-        (1, 'Phở bò', 60000, 'pho_bo.jpg'),
-        (2, 'Gỏi cuốn', 40000, 'goi_cuon.jpg'),
-        (3, 'Cà phê sữa', 25000, 'ca_phe_sua.jpg');
+        (1, 'Mì xào', 50000, 'mi_xao'),
+        (1, 'Phở bò', 60000, 'pho_bo'),
+        (2, 'Gỏi cuốn', 40000, 'goi_cuon'),
+        (3, 'Cà phê sữa', 25000, 'ca_phe_sua');
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Đơn Hàng

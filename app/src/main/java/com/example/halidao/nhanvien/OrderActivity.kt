@@ -3,6 +3,7 @@ package com.example.halidao.nhanvien
 import DatabaseHelper
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -73,6 +74,8 @@ class OrderActivity : AppCompatActivity() {
             onClickOrder = { order ->
                 val intent = Intent(this, OrderDetailActivity::class.java)
                 intent.putExtra("ORDER_ID", order.id)
+                intent.putExtra("ID_BAN", order.idBan)
+                Log.d("DEBUG", "TABLE_NUMBER nhận được: ${order.idBan}")
                 startActivity(intent)
             }
         )

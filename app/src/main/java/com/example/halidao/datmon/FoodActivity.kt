@@ -3,6 +3,7 @@ package com.example.halidao.datmon
 import DatabaseHelper
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.viewModels
@@ -24,6 +25,7 @@ class FoodActivity : AppCompatActivity() {
 
             // Lấy số bàn từ Intent
             val tableNumber = intent.getStringExtra("TABLE_NUMBER")
+            Log.d("DEBUG", "TABLE_NUMBER nhận được: $tableNumber")
             if (tableNumber.isNullOrEmpty()) {
                 // Nếu không có số bàn, thông báo lỗi và đóng Activity
                 finish()

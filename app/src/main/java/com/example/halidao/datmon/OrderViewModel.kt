@@ -20,31 +20,55 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
     val selectedItems: LiveData<List<GioHangItem>> get() = _selectedItems
 
     fun loadCart() {
-        _selectedItems.value = dbHelper.getCartItems()
+        viewModelScope.launch(Dispatchers.IO) {
+            val cartItems = dbHelper.getCartItems()
+            withContext(Dispatchers.Main) {
+                _selectedItems.value = cartItems
+            }
+        }
     }
 
-    fun addItem(monAn: MenuItem) {
-        dbHelper.addToCart(monAn)
-        loadCart() // Cập nhật lại LiveData
+    fun updateItem(monAn: MenuItem, soLuong: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val existingItem = dbHelper.getCartItemById(monAn.id) // Kiểm tra xem món đã có trong DB chưa
+            if (existingItem != null) {
+                if (soLuong > 0) {
+                    dbHelper.updateCartItem(monAn.id, soLuong) // Cập nhật số lượng thay vì cộng dồn
+                } else {
+                    dbHelper.removeFromCart(monAn.id) // Nếu số lượng về 0 thì xóa
+                }
+            } else {
+                dbHelper.addToCart(monAn, soLuong) // Nếu chưa có, thêm mới
+            }
+
+            // Cập nhật giỏ hàng ngay lập tức
+            loadCart()
+        }
     }
 
     fun removeItem(cartItem: GioHangItem) {
-        dbHelper.removeFromCart(cartItem.idMonAn)  // Xóa trong database
-        val updatedList = _selectedItems.value?.toMutableList()
-        updatedList?.remove(cartItem) // Xóa khỏi LiveData
-//        _selectedItems.value = updatedList
+        viewModelScope.launch(Dispatchers.IO) {
+            dbHelper.removeFromCart(cartItem.idMonAn)
+            loadCart() // Cập nhật lại LiveData để UI phản ánh thay đổi
+        }
     }
 
     fun clearOrder() {
-        dbHelper.clearCart()
-        loadCart()
+        viewModelScope.launch(Dispatchers.IO) {
+            dbHelper.clearCart()
+            withContext(Dispatchers.Main) {
+                _selectedItems.value = emptyList() // Xóa sạch UI
+            }
+        }
+    }
+    fun getQuantity(monAn: MenuItem): Int {
+        val cartItems = _selectedItems.value ?: emptyList()
+        return cartItems.find { it.idMonAn == monAn.id }?.soLuong ?: 0
     }
     fun placeOrder(idBan: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val ngayHienTai = System.currentTimeMillis()
-
-                // Lấy danh sách món ăn từ giỏ hàng, nếu null thì trả về danh sách rỗng
                 val items = selectedItems.value ?: emptyList()
 
                 if (items.isEmpty()) {
@@ -54,11 +78,9 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
 
                 val tongTien = items.sumOf { it.soTien * it.soLuong }
 
-                // Bước 1: Thêm đơn hàng vào SQLite
                 val idDonHang = dbHelper.insertDonHang(idBan, ngayHienTai, tongTien)
 
                 if (idDonHang != -1L) {
-                    // Bước 2: Thêm từng món ăn vào ChiTietDonHang
                     items.forEach { item ->
                         dbHelper.insertChiTietDonHang(idDonHang.toInt(), item.idMonAn, item.soLuong, item.soTien)
                     }
@@ -68,7 +90,6 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
                     // Bước 3: Xóa giỏ hàng
                     dbHelper.clearCart()
 
-                    // Bước 4: Cập nhật UI trên luồng chính
                     withContext(Dispatchers.Main) {
                         _selectedItems.value = emptyList() // Cập nhật giỏ hàng rỗng
                     }
@@ -78,7 +99,4 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-
-
 }

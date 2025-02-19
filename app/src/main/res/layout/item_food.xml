@@ -1,56 +1,79 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="8dp"
-    android:background="@android:color/white">
+    android:background="@android:color/white"
+    android:gravity="center_vertical">
 
-    <!-- Layout món ăn -->
+    <ImageView
+        android:id="@+id/foodImage"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_launcher_background"
+        android:layout_marginEnd="8dp"/>
+
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/foodImage"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background"
-            android:layout_marginEnd="8dp"/>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/foodName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tên món ăn"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/foodPrice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Giá tiền"
-                android:textSize="14sp"
-                android:textColor="@android:color/holo_red_dark"/>
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btnSelectFood"
+        <TextView
+            android:id="@+id/foodName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chọn"
+            android:text="Tên món ăn"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/foodPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Giá tiền"
             android:textSize="14sp"
-            android:backgroundTint="@android:color/holo_blue_light"
-            android:textColor="@android:color/white"/>
+            android:textColor="@android:color/holo_red_dark"/>
     </LinearLayout>
+
+    <!-- Layout số lượng (thay thế nút "Chọn") -->
+    <LinearLayout
+        android:id="@+id/quantityLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnDecrease"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="-"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:backgroundTint="@android:color/holo_blue_light"/>
+
+        <TextView
+            android:id="@+id/foodQuantity"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="0"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@android:color/darker_gray"
+            android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/btnIncrease"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="+"
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@android:color/holo_blue_light"
+            android:foregroundTint="@android:color/white"/>
+    </LinearLayout>
+
 </LinearLayout>

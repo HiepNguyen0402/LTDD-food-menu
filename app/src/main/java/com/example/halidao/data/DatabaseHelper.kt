@@ -239,16 +239,30 @@ class DatabaseHelper(context: Context) :
         onCreate(db) // Gọi lại để tạo bảng mới
     }
     // Thêm món vào giỏ hàng
-    fun addToCart(monAn: MenuItem) {
+    fun addToCart(monAn: MenuItem, soLuong: Int) {
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put("id_mon_an", monAn.id)
-            put("ten_mon", monAn.tenMon)
-            put("so_tien", monAn.gia)
-            put("so_luong", 1)
+        try {
+            db.rawQuery("SELECT so_luong FROM GioHang WHERE id_mon_an = ?", arrayOf(monAn.id.toString())).use { cursor ->
+                val values = ContentValues().apply {
+                    put("id_mon_an", monAn.id)
+                    put("ten_mon", monAn.tenMon)
+                    put("so_tien", monAn.gia)
+                }
+
+                if (cursor.moveToFirst()) {
+                    // Nếu món ăn đã có trong giỏ, cộng thêm số lượng mới
+                    val newQuantity = cursor.getInt(0) + soLuong
+                    values.put("so_luong", newQuantity)
+                    db.update("GioHang", values, "id_mon_an = ?", arrayOf(monAn.id.toString()))
+                } else {
+                    // Nếu chưa có, thêm mới với số lượng được chỉ định
+                    values.put("so_luong", soLuong)
+                    db.insert("GioHang", null, values)
+                }
+            }
+        } finally {
+            db.close()
         }
-        db.insert("GioHang", null, values)
-        db.close()
     }
 
     // Lấy danh sách món trong giỏ hàng
@@ -271,6 +285,39 @@ class DatabaseHelper(context: Context) :
         cursor.close()
         db.close()
         return cartItems
+    }
+
+    fun updateCartItem(idMonAn: Int, soLuong: Int) {
+        val db = writableDatabase
+        try {
+            val values = ContentValues().apply {
+                put("so_luong", soLuong)
+            }
+            db.update("GioHang", values, "id_mon_an = ?", arrayOf(idMonAn.toString()))
+        } finally {
+            db.close()
+        }
+    }
+
+    fun getCartItemById(idMonAn: Int): GioHangItem? {
+        val db = readableDatabase
+        var cartItem: GioHangItem? = null
+        try {
+            db.rawQuery("SELECT id_mon_an, ten_mon, so_luong, so_tien FROM GioHang WHERE id_mon_an = ?",
+                arrayOf(idMonAn.toString())
+            ).use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val id = cursor.getInt(0)
+                    val tenMon = cursor.getString(1)
+                    val soLuong = cursor.getInt(2)
+                    val soTien = cursor.getInt(3)
+                    cartItem = GioHangItem(idMonAn, idMonAn, tenMon, soTien, soLuong)
+                }
+            }
+        } finally {
+            db.close()
+        }
+        return cartItem
     }
 
     // Xóa món khỏi giỏ hàng

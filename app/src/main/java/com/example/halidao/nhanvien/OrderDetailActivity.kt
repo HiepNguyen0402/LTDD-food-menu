@@ -23,7 +23,7 @@ class OrderDetailActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private var orderId: Int = -1
     private lateinit var adapter: OrderDetailAdapter
-
+    private var idBan: Int = -1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_order_detail)
@@ -34,6 +34,7 @@ class OrderDetailActivity : AppCompatActivity() {
         btnAction = findViewById(R.id.btnAction)
         btnAddFood = findViewById(R.id.btnAddFood)
         orderId = intent.getIntExtra("ORDER_ID", -1)
+        idBan = intent.getIntExtra("ID_BAN", -1)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -107,8 +108,27 @@ class OrderDetailActivity : AppCompatActivity() {
     }
 
     private fun processPayment() {
-        dbHelper.markOrderAsPaid(orderId)
-        Toast.makeText(this, "Thanh toán thành công!", Toast.LENGTH_SHORT).show()
-        finish() // Đóng màn hình sau khi thanh toán
+        if (idBan == -1) {
+            Toast.makeText(this, "Lỗi: Không xác định được bàn!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val updated = dbHelper.updateOrderAsPaid(orderId)
+        if (!updated) {
+            Toast.makeText(this, "Lỗi: Không thể cập nhật trạng thái thanh toán!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Xóa chi tiết đơn hàng cũ để tránh lỗi hiển thị
+        dbHelper.deleteOrderDetails(orderId)
+
+        // ✅ Cập nhật trạng thái bàn về "Trống"
+        dbHelper.updateTableStatus(idBan, 1)
+
+        // ✅ Chuyển về màn hình danh sách đơn hàng
+        val intent = Intent(this, OrderActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+        startActivity(intent)
+        finish()
     }
 }

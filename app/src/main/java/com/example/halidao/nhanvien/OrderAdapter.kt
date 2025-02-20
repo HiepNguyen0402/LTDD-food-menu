@@ -28,7 +28,6 @@ class OrderAdapter(
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_order, parent, false)
         return OrderViewHolder(view)
     }
-
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
         val order = orders[position]
 
@@ -38,6 +37,9 @@ class OrderAdapter(
         // Hiển thị trạng thái bàn
         holder.txtStatus.text = if (order.trangThai == 1) "Trống" else "Đang sử dụng"
 
+        // Ẩn nút cập nhật nếu bàn đang sử dụng
+        holder.btnUpdateStatus.visibility = if (order.trangThai == 1) View.VISIBLE else View.GONE
+
         // Ẩn nút thanh toán nếu bàn trống
         holder.btnPayment.visibility = if (order.trangThai == 2) View.VISIBLE else View.GONE
 
@@ -45,6 +47,7 @@ class OrderAdapter(
         holder.btnPayment.setOnClickListener { onPayment(order) }
         holder.itemView.setOnClickListener { onClickOrder(order) }
     }
+
 
     fun updateData(newOrders: List<Order>) {
         orders = newOrders

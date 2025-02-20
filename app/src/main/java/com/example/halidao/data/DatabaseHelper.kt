@@ -16,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 17// Tăng version để cập nhật da tabase
+        private const val DATABASE_VERSION = 29// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -409,44 +409,56 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsUpdated > 0
     }
-
     fun payOrder(orderId: Int, amount: Int, paymentMethod: String): Boolean {
         val db = writableDatabase
         db.beginTransaction()
-        try {
+        return try {
             // Cập nhật đơn hàng thành đã thanh toán
-            val values = ContentValues()
-            values.put("da_thanh_toan", 1)
-            values.put("phuong_thuc_thanh_toan", paymentMethod)
+            val values = ContentValues().apply {
+                put("da_thanh_toan", 1)
+                put("phuong_thuc_thanh_toan", paymentMethod)
+            }
             db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
 
             // Ghi nhận vào bảng ThanhToan
-            val paymentValues = ContentValues()
-            paymentValues.put("id_don_hang", orderId)
-            paymentValues.put("ngay", System.currentTimeMillis())
-            paymentValues.put("so_tien", amount)
-            paymentValues.put("phuong_thuc", paymentMethod)
+            val paymentValues = ContentValues().apply {
+                put("id_don_hang", orderId)
+                put("ngay", System.currentTimeMillis())
+                put("so_tien", amount)
+                put("phuong_thuc", paymentMethod)
+            }
             db.insert("ThanhToan", null, paymentValues)
 
+            // Xóa đơn hàng cũ trước khi tạo đơn hàng mới
+            deleteOldOrdersForTable(orderId)
+
             db.setTransactionSuccessful()
-            return true
+            true
         } catch (e: Exception) {
-            Log.e("PayOrder", "Lỗi thanh toán: ${e.message}")
-            return false
+            Log.e("DatabaseHelper", "Lỗi thanh toán: ${e.message}")
+            false
         } finally {
             db.endTransaction()
             db.close()
         }
     }
 
-    fun markOrderAsPaid(orderId: Int): Boolean {
+
+    fun markOrderAsPaid(orderId: Int, paymentMethod: String): Boolean {
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put("da_thanh_toan", 1)
+        return try {
+            val values = ContentValues().apply {
+                put("da_thanh_toan", 1) // ✅ Đánh dấu đã thanh toán
+                put("phuong_thuc_thanh_toan", paymentMethod) // ✅ Thêm phương thức thanh toán
+            }
+            val rowsUpdated = db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
+            rowsUpdated > 0
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Lỗi khi cập nhật trạng thái thanh toán: ${e.message}")
+            false
+        } finally {
+            db.close()
         }
-        val rowsUpdated = db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
-        db.close()
-        return rowsUpdated > 0
     }
 
     fun insertOrder(idBan: Int, idKhachHang: Int?, tongTien: Int, trangThai: Int): Long {
@@ -483,21 +495,22 @@ class DatabaseHelper(context: Context) :
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
         WHERE ChiTietDonHang.id_don_hang = ? AND ChiTietDonHang.id_trang_thai = ?
-    """ // ✅ Thêm điều kiện lọc theo trạng thái món ăn
+    """
 
         val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
 
         if (cursor.moveToFirst()) {
             do {
-                val tenMon = cursor.getString(0) // Lấy tên món ăn
-                val soLuong = cursor.getInt(1)   // Lấy số lượng
-                val gia = cursor.getInt(2)       // Lấy giá
+                val tenMon = cursor.getString(0)
+                val soLuong = cursor.getInt(1)
+                val gia = cursor.getInt(2)
                 items.add(OrderDetail(tenMon, soLuong, gia))
             } while (cursor.moveToNext())
         }
         cursor.close()
         return items
     }
+
 
     fun getAllMenuItems(): List<MenuItem> {
         val menuItems = mutableListOf<MenuItem>()
@@ -523,34 +536,33 @@ class DatabaseHelper(context: Context) :
         Log.d("DatabaseHelper", "Lấy danh sách món ăn thành công: $menuItems")
         return menuItems
     }
+    fun updateOrderAsPaid(orderId: Int): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("da_thanh_toan", 1)
+            put("phuong_thuc_thanh_toan", "Tiền mặt")
+        }
+        val rowsUpdated = db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
+        db.close()
+        return rowsUpdated > 0
+    }
 
+    fun deleteOrderDetails(orderId: Int): Boolean {
+        val db = writableDatabase
+        val rowsDeleted = db.delete("ChiTietDonHang", "id_don_hang = ?", arrayOf(orderId.toString()))
+        db.close()
+        return rowsDeleted > 0
+    }
     fun updateTableStatus(tableId: Int, newStatusId: Int): Boolean {
         val db = writableDatabase
-        db.beginTransaction()
-        return try {
-            // ✅ Cập nhật trạng thái bàn
-            val tableValues = ContentValues().apply {
-                put("id_trang_thai", newStatusId)
-            }
-            db.update("BanAn", tableValues, "id = ?", arrayOf(tableId.toString()))
-
-            // ✅ Nếu bàn chuyển về "Trống", cập nhật trạng thái hóa đơn thành 7 (Đã thanh toán)
-            if (newStatusId == 1) { // 1 = Bàn trống
-                val orderValues = ContentValues().apply {
-                    put("id_trang_thai", 7) // ✅ Đánh dấu đơn hàng là "Đã thanh toán"
-                }
-                db.update("DonHang", orderValues, "id_ban = ? AND da_thanh_toan = 0", arrayOf(tableId.toString()))
-            }
-
-            db.setTransactionSuccessful()
-            true
-        } catch (e: Exception) {
-            false
-        } finally {
-            db.endTransaction()
-            db.close()
+        val values = ContentValues().apply {
+            put("id_trang_thai", newStatusId)
         }
+        val rowsUpdated = db.update("BanAn", values, "id = ?", arrayOf(tableId.toString()))
+        db.close()
+        return rowsUpdated > 0
     }
+
 
     fun getOrdersByTableStatus(statusId: Int): List<Order> {
         val orders = mutableListOf<Order>()
@@ -584,9 +596,9 @@ class DatabaseHelper(context: Context) :
     fun deleteOldOrdersForTable(tableId: Int): Boolean {
         val db = writableDatabase
         val rowsDeleted = db.delete("DonHang", "id_ban = ? AND da_thanh_toan = 1", arrayOf(tableId.toString()))
-        db.close()
         return rowsDeleted > 0
     }
+
 
     fun deleteFood(foodId: Int): Boolean {
         val db = writableDatabase

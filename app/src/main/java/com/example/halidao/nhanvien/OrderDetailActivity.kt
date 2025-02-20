@@ -23,6 +23,7 @@ class OrderDetailActivity : AppCompatActivity() {
     private lateinit var dbHelper: DatabaseHelper
     private var orderId: Int = -1
     private lateinit var adapter: OrderDetailAdapter
+    private var idBan: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +35,7 @@ class OrderDetailActivity : AppCompatActivity() {
         btnAction = findViewById(R.id.btnAction)
         btnAddFood = findViewById(R.id.btnAddFood)
         orderId = intent.getIntExtra("ORDER_ID", -1)
+        idBan = intent.getIntExtra("ID_BAN", -1)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -43,10 +45,7 @@ class OrderDetailActivity : AppCompatActivity() {
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                val position = tab?.position ?: 0
-                loadOrderDetails(position)
-
-                btnAddFood.visibility = if (position == 0) View.VISIBLE else View.GONE
+                loadOrderDetails(tab?.position ?: 0)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
@@ -68,12 +67,13 @@ class OrderDetailActivity : AppCompatActivity() {
             val tableNumber = intent.getIntExtra("ID_BAN",-1)
             val intent = Intent(this, FoodActivity::class.java) // Chuyển sang FoodActivity
             intent.putExtra("TABLE_NUMBER", tableNumber.toString())  // Truyền số bàn qua FoodActivity
-            intent.putExtra("ORDER_ID", orderId)
             startActivity(intent)  // Chuyển Activity
         }
     }
 
     private fun loadOrderDetails(status: Int) {
+        if (orderId == -1) return
+
         val statusId = when (status) {
             0 -> 4 // Chưa làm
             1 -> 5 // Đang làm
@@ -82,20 +82,19 @@ class OrderDetailActivity : AppCompatActivity() {
         }
 
         val items: List<OrderDetail> = dbHelper.getOrderDetailsByStatus(orderId, statusId)
-        Log.d("OrderViewModel", "Danh sách món ăn: $items")
         adapter = OrderDetailAdapter(items)
         recyclerView.adapter = adapter
 
-        // Kiểm tra danh sách món ăn trước khi hiển thị nút
         btnAction.visibility = if (items.isNotEmpty()) View.VISIBLE else View.GONE
 
-        // Cập nhật nội dung nút dựa theo trạng thái
         when (status) {
             0 -> btnAction.text = "Chuyển sang Đang làm"
             1 -> btnAction.text = "Chuyển sang Đã xong"
             2 -> btnAction.text = "Thanh toán"
         }
     }
+
+
 
     private fun updateOrderStatus(currentStatus: Int, newStatus: Int) {
         val success = dbHelper.updateOrderStatus(orderId, currentStatus, newStatus)
@@ -107,8 +106,31 @@ class OrderDetailActivity : AppCompatActivity() {
     }
 
     private fun processPayment() {
-        dbHelper.markOrderAsPaid(orderId)
-        Toast.makeText(this, "Thanh toán thành công!", Toast.LENGTH_SHORT).show()
-        finish() // Đóng màn hình sau khi thanh toán
+        if (idBan == -1) {
+            Toast.makeText(this, "Lỗi: Không xác định được bàn!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val updated = dbHelper.updateOrderAsPaid(orderId)
+        if (!updated) {
+            Toast.makeText(this, "Lỗi: Không thể cập nhật trạng thái thanh toán!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Xóa chi tiết đơn hàng cũ để tránh lỗi hiển thị
+        dbHelper.deleteOrderDetails(orderId)
+
+        // ✅ Cập nhật trạng thái bàn về "Trống"
+        dbHelper.updateTableStatus(idBan, 1)
+
+        // ✅ Chuyển về màn hình danh sách đơn hàng
+        val intent = Intent(this, OrderActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+        startActivity(intent)
+        finish()
     }
+
+
+
+
 }

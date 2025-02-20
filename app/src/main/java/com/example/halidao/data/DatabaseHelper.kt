@@ -769,13 +769,34 @@ class DatabaseHelper(context: Context) :
 
     fun insertChiTietDonHang(idDonHang: Int, idMonAn: Int, soLuong: Int, gia: Int) {
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put("id_don_hang", idDonHang)
-            put("id_mon_an", idMonAn)
-            put("so_luong", soLuong)
-            put("gia", gia)
+        db.beginTransaction()
+        try {
+            val values = ContentValues().apply {
+                put("id_don_hang", idDonHang)
+                put("id_mon_an", idMonAn)
+                put("so_luong", soLuong)
+                put("gia", gia)
+            }
+            db.insert("ChiTietDonHang", null, values)
+
+            // Cập nhật tổng tiền của DonHang
+            db.execSQL(
+                """
+            UPDATE DonHang 
+            SET tong_tien = (
+                SELECT SUM(gia * so_luong) 
+                FROM ChiTietDonHang 
+                WHERE id_don_hang = ?
+            )
+            WHERE id = ?
+            """, arrayOf(idDonHang, idDonHang)
+            )
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
         }
-        db.insert("ChiTietDonHang", null, values)
     }
+
 
 }

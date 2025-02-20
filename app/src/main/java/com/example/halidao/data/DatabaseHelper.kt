@@ -16,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 17// Tăng version để cập nhật da tabase
+        private const val DATABASE_VERSION = 19// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -189,7 +189,7 @@ class DatabaseHelper(context: Context) :
         // Thêm dữ liệu mẫu vào Bảng Danh Mục Món Ăn
         db.execSQL("""
         INSERT INTO DanhMuc (danh_muc) VALUES 
-        ('Món chính'), ('Món phụ'), ('Đồ uống');
+        ('Món chính'), ('Món phụ'), ('Đồ uống'), ('Tráng miệng');
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Món Ăn
@@ -197,8 +197,23 @@ class DatabaseHelper(context: Context) :
         INSERT INTO MonAn (id_danh_muc, ten_mon, so_tien, hinh_anh) VALUES 
         (1, 'Mì xào', 50000, 'mi_xao'),
         (1, 'Phở bò', 60000, 'pho_bo'),
+        (1, 'Bún thịt nướng', 55000, 'bun_thit_nuong'),
+        (1, 'Bún bò Huế', 60000, 'bun_bo_hue'),
+        (1, 'Cơm chiên hải sản', 65000, 'com_chien_hai_san'),
+        (1, 'Cơm tấm', 50000, 'com_tam'),
         (2, 'Gỏi cuốn', 40000, 'goi_cuon'),
-        (3, 'Cà phê sữa', 25000, 'ca_phe_sua');
+        (2, 'Bò bía', 30000, 'bo_bia'),
+        (3, 'Cà phê sữa', 20000, 'ca_phe_sua'),
+        (3, 'Coca cola', 15000, 'coca'),
+        (3, '7up', 15000, 'sevent_up'),
+        (3, 'Bia Tiger', 15000, 'tiger'),
+        (3, 'Bia Heineken', 15000, 'heineken'),
+        (3, 'Nước cam', 25000, 'nuoc_cam'),
+        (3, 'Aquafina', 10000, 'aquafina'),
+        (3, 'Trà sữa', 25000, 'tra_sua'),
+        (4, 'Sửa chua', 10000, 'sua_chua'),
+        (4, 'kem ốc quê', 10000, 'oc_que'),
+        (4, 'Kem ly', 15000, 'kem_ly');
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Đơn Hàng

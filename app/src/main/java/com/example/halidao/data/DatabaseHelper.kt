@@ -479,21 +479,21 @@ class DatabaseHelper(context: Context) :
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
         val query = """
-        SELECT MonAn.ten_mon, SUM(ChiTietDonHang.so_luong), SUM(ChiTietDonHang.gia)
+        SELECT ChiTietDonHang.id, MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
         WHERE ChiTietDonHang.id_don_hang = ? AND ChiTietDonHang.id_trang_thai = ?
-        GROUP BY MonAn.ten_mon
-    """ // ✅ Gộp các món trùng tên
+    """ // ✅ Lấy thêm ID từ ChiTietDonHang
 
         val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
 
         if (cursor.moveToFirst()) {
             do {
-                val tenMon = cursor.getString(0) // Lấy tên món ăn
-                val soLuong = cursor.getInt(1)   // Tổng số lượng
-                val gia = cursor.getInt(2)       // Tổng giá
-                items.add(OrderDetail(tenMon = tenMon, soLuong = soLuong, gia = gia))
+                val id = cursor.getInt(0)        // Lấy ID món ăn trong ChiTietDonHang
+                val tenMon = cursor.getString(1) // Lấy tên món ăn
+                val soLuong = cursor.getInt(2)   // Lấy số lượng
+                val gia = cursor.getInt(3)       // Lấy giá
+                items.add(OrderDetail(id, tenMon, soLuong, gia))
             } while (cursor.moveToNext())
         }
         cursor.close()

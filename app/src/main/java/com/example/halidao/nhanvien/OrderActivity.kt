@@ -59,14 +59,10 @@ class OrderActivity : AppCompatActivity() {
             onPayment = { order ->
                 val success = dataHelper.payOrder(order.id, order.tongTien, "Tiền mặt")
                 if (success) {
-                    Toast.makeText(this, "Thanh toán thành công! Tạo đơn hàng mới.", Toast.LENGTH_SHORT).show()
-
-                    // Xóa đơn hàng cũ trước khi tạo đơn hàng mới để tránh trùng bàn
+                    dataHelper.deleteOrderDetails(order.id) // Xóa chi tiết đơn hàng cũ
                     dataHelper.deleteOldOrdersForTable(order.idBan)
-
-                    // Sau khi thanh toán, tạo đơn hàng mới cho bàn và cập nhật trạng thái bàn về "Trống"
-                    dataHelper.updateTableStatus(order.idBan, 1) // 1 = Bàn trống
-                    dataHelper.insertOrder(order.idBan, null, 0, 1) // Tạo đơn hàng mới với trạng thái "Chưa làm"
+                    dataHelper.updateTableStatus(order.idBan, 1)
+                    dataHelper.insertOrder(order.idBan, null, 0, 1)
 
                     loadOrders(tabLayout.selectedTabPosition)
                 }

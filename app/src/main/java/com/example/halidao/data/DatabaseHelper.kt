@@ -797,6 +797,20 @@ class DatabaseHelper(context: Context) :
             db.endTransaction()
         }
     }
-
-
+    fun deleteOrderDetails(orderId: Int): Boolean {
+        val db = writableDatabase
+        val rowsDeleted = db.delete("ChiTietDonHang", "id_don_hang = ?", arrayOf(orderId.toString()))
+        db.close()
+        return rowsDeleted > 0
+    }
+    fun updateOrderAsPaid(orderId: Int): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("da_thanh_toan", 1)
+            put("phuong_thuc_thanh_toan", "Tiền mặt")
+        }
+        val rowsUpdated = db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
+        db.close()
+        return rowsUpdated > 0
+    }
 }

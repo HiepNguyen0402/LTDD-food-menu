@@ -24,6 +24,8 @@ class OrderDetailActivity : AppCompatActivity() {
     private var orderId: Int = -1
     private lateinit var adapter: OrderDetailAdapter
     private var idBan: Int = -1
+    private var selectedOrderDetailId: Int? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_order_detail)
@@ -60,9 +62,16 @@ class OrderDetailActivity : AppCompatActivity() {
 
         btnAction.setOnClickListener {
             when (tabLayout.selectedTabPosition) {
-                0 -> updateOrderStatus(4, 5) // Chuyển từ "Chưa làm" -> "Đang làm"
-                1 -> updateOrderStatus(5, 6) // Chuyển từ "Đang làm" -> "Đã xong"
-                2 -> processPayment() // Thanh toán khi ở tab "Đã xong"
+                0, 1 -> { // Nếu đang ở tab "Chưa làm" hoặc "Đang làm"
+                    selectedOrderDetailId?.let { orderDetailId ->
+                        val currentStatus = if (tabLayout.selectedTabPosition == 0) 4 else 5
+                        val newStatus = if (currentStatus == 4) 5 else 6
+                        updateOrderStatus(currentStatus, newStatus, orderDetailId)
+                    } ?: Toast.makeText(this, "Hãy chọn một món trước!", Toast.LENGTH_SHORT).show()
+                }
+                2 -> { // Nếu ở tab "Đã xong"
+                    processPayment() // Gọi hàm thanh toán
+                }
             }
         }
         btnAddFood.setOnClickListener {
@@ -84,11 +93,17 @@ class OrderDetailActivity : AppCompatActivity() {
 
         val items: List<OrderDetail> = dbHelper.getOrderDetailsByStatus(orderId, statusId)
         Log.d("OrderViewModel", "Danh sách món ăn: $items")
-        adapter = OrderDetailAdapter(items)
+
+        adapter = OrderDetailAdapter(items) { orderDetailId ->
+            selectedOrderDetailId = orderDetailId
+
+            // Hiển thị nút nếu món ăn đang ở trạng thái "Chưa làm" hoặc "Đang làm"
+            btnAction.visibility = if (statusId == 4 || statusId == 5) View.VISIBLE else View.GONE
+        }
         recyclerView.adapter = adapter
 
-        // Kiểm tra danh sách món ăn trước khi hiển thị nút
-        btnAction.visibility = if (items.isNotEmpty()) View.VISIBLE else View.GONE
+        // Ẩn nút nếu không có món nào được chọn, nhưng nếu ở tab "Đã xong" thì luôn hiển thị
+        btnAction.visibility = if (statusId == 6) View.VISIBLE else View.GONE
 
         // Cập nhật nội dung nút dựa theo trạng thái
         when (status) {
@@ -98,10 +113,10 @@ class OrderDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateOrderStatus(currentStatus: Int, newStatus: Int) {
-        val success = dbHelper.updateOrderStatus(orderId, currentStatus, newStatus)
+    private fun updateOrderStatus(currentStatus: Int, newStatus: Int, orderDetailId: Int) {
+        val success = dbHelper.updateOrderStatus(orderId, currentStatus, newStatus, orderDetailId)
         if (success) {
-            loadOrderDetails(tabLayout.selectedTabPosition)
+            loadOrderDetails(tabLayout.selectedTabPosition) // Tải lại danh sách
         } else {
             Toast.makeText(this, "Không thể cập nhật trạng thái!", Toast.LENGTH_SHORT).show()
         }

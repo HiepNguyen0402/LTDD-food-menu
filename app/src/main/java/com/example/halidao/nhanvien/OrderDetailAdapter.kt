@@ -8,13 +8,22 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.halidao.R
 
-class OrderDetailAdapter(private val orderDetails: List<OrderDetail>) :
+class OrderDetailAdapter(private val orderDetails: List<OrderDetail>,
+                         private val onItemClick: (Int) -> Unit) :
     RecyclerView.Adapter<OrderDetailAdapter.OrderDetailViewHolder>() {
 
     inner class OrderDetailViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val txtDishName: TextView = itemView.findViewById(R.id.txtDishNameDetail)
         val txtQuantity: TextView = itemView.findViewById(R.id.txtQuantity)
         val txtPrice: TextView = itemView.findViewById(R.id.txtPrice)
+        init {
+            itemView.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemClick(orderDetails[position].orderDetailId) // Gửi ID của món được chọn
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderDetailViewHolder {

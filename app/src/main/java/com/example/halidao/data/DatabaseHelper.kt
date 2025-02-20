@@ -392,7 +392,7 @@ class DatabaseHelper(context: Context) :
         return orders
     }
 
-    fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int): Boolean {
+    fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int, orderDetailId: Int): Boolean {
         val db = writableDatabase
 
         val values = ContentValues().apply {
@@ -402,8 +402,8 @@ class DatabaseHelper(context: Context) :
         val rowsUpdated = db.update(
             "ChiTietDonHang",
             values,
-            "id_don_hang = ? AND id_trang_thai = ?",
-            arrayOf(orderId.toString(), currentStatus.toString())
+            "id_don_hang = ? AND id_trang_thai = ? AND id = ?",
+            arrayOf(orderId.toString(), currentStatus.toString(),orderDetailId.toString() )
         )
 
         db.close()
@@ -479,20 +479,21 @@ class DatabaseHelper(context: Context) :
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
         val query = """
-        SELECT MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
+        SELECT ChiTietDonHang.id, MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
         WHERE ChiTietDonHang.id_don_hang = ? AND ChiTietDonHang.id_trang_thai = ?
-    """ // ✅ Thêm điều kiện lọc theo trạng thái món ăn
+    """ // ✅ Lấy thêm ID từ ChiTietDonHang
 
         val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
 
         if (cursor.moveToFirst()) {
             do {
-                val tenMon = cursor.getString(0) // Lấy tên món ăn
-                val soLuong = cursor.getInt(1)   // Lấy số lượng
-                val gia = cursor.getInt(2)       // Lấy giá
-                items.add(OrderDetail(tenMon, soLuong, gia))
+                val id = cursor.getInt(0)        // Lấy ID món ăn trong ChiTietDonHang
+                val tenMon = cursor.getString(1) // Lấy tên món ăn
+                val soLuong = cursor.getInt(2)   // Lấy số lượng
+                val gia = cursor.getInt(3)       // Lấy giá
+                items.add(OrderDetail(id, tenMon, soLuong, gia))
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -768,13 +769,33 @@ class DatabaseHelper(context: Context) :
 
     fun insertChiTietDonHang(idDonHang: Int, idMonAn: Int, soLuong: Int, gia: Int) {
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put("id_don_hang", idDonHang)
-            put("id_mon_an", idMonAn)
-            put("so_luong", soLuong)
-            put("gia", gia)
+        db.beginTransaction()
+        try {
+            val values = ContentValues().apply {
+                put("id_don_hang", idDonHang)
+                put("id_mon_an", idMonAn)
+                put("so_luong", soLuong)
+                put("gia", gia)
+            }
+            db.insert("ChiTietDonHang", null, values)
+
+            // Cập nhật tổng tiền của DonHang
+            db.execSQL(
+                """
+            UPDATE DonHang 
+            SET tong_tien = (
+                SELECT SUM(gia * so_luong) 
+                FROM ChiTietDonHang 
+                WHERE id_don_hang = ?
+            )
+            WHERE id = ?
+            """, arrayOf(idDonHang, idDonHang)
+            )
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
         }
-        db.insert("ChiTietDonHang", null, values)
     }
     fun deleteOrderDetails(orderId: Int): Boolean {
         val db = writableDatabase

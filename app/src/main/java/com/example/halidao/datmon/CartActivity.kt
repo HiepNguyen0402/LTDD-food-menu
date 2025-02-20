@@ -1,6 +1,7 @@
 package com.example.halidao.datmon
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -28,7 +29,8 @@ class CartActivity : AppCompatActivity() {
 
         // Nhận số bàn từ Intent
         tableNumber = intent.getStringExtra("TABLE_NUMBER")?.toIntOrNull() ?: -1
-
+        val orderId = intent.getIntExtra("ORDER_ID", -1)
+        Log.d("OrderViewModelcart", "ID Đơn Hàng: $orderId")
         orderViewModel.loadCart() // Load danh sách giỏ hàng
 
         orderViewModel.selectedItems.observe(this) { items ->
@@ -46,7 +48,7 @@ class CartActivity : AppCompatActivity() {
             if (tableNumber == -1) {
                 Toast.makeText(this, "Lỗi: Không tìm thấy số bàn!", Toast.LENGTH_SHORT).show()
             } else {
-                orderViewModel.placeOrder(tableNumber)
+                orderViewModel.placeOrder(tableNumber, orderId)
                 Toast.makeText(this, "Đơn hàng đã được gửi!", Toast.LENGTH_SHORT).show()
                 finish() // Quay về màn hình trước
             }

@@ -75,7 +75,6 @@ class OrderActivity : AppCompatActivity() {
                 val intent = Intent(this, OrderDetailActivity::class.java)
                 intent.putExtra("ORDER_ID", order.id)
                 intent.putExtra("ID_BAN", order.idBan)
-                Log.d("DEBUG", "TABLE_NUMBER nhận được: ${order.idBan}")
                 startActivity(intent)
             }
         )

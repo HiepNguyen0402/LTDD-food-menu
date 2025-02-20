@@ -65,7 +65,7 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
         val cartItems = _selectedItems.value ?: emptyList()
         return cartItems.find { it.idMonAn == monAn.id }?.soLuong ?: 0
     }
-    fun placeOrder(idBan: Int) {
+    fun placeOrder(idBan: Int, idDonHang: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val ngayHienTai = System.currentTimeMillis()
@@ -77,16 +77,23 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 val tongTien = items.sumOf { it.soTien * it.soLuong }
+                var newIdDonHang = idDonHang // Khai báo biến `var` để có thể thay đổi giá trị
 
-                val idDonHang = dbHelper.insertDonHang(idBan, ngayHienTai, tongTien)
+                if (newIdDonHang == -1) {
+                    newIdDonHang = dbHelper.insertDonHang(idBan, ngayHienTai, tongTien).toInt()
+                }
 
-                if (idDonHang != -1L) {
+                if (newIdDonHang != -1) {
+                    Log.d("OrderViewModel1", "ID Đơn Hàng: $idDonHang")
+                    Log.d("OrderViewModel1", "ID Đơn Hàng: $newIdDonHang")
                     items.forEach { item ->
-                        dbHelper.insertChiTietDonHang(idDonHang.toInt(), item.idMonAn, item.soLuong, item.soTien)
+                        dbHelper.insertChiTietDonHang(newIdDonHang, item.idMonAn, item.soLuong, item.soTien)
                     }
                     
                     // update trạng thái bàn
-                    dbHelper.updateTableStatus(idBan, 2)
+                    if(idDonHang == -1){
+                        dbHelper.updateTableStatus(idBan, 2)
+                    }
                     // Bước 3: Xóa giỏ hàng
                     dbHelper.clearCart()
 

@@ -43,7 +43,10 @@ class OrderDetailActivity : AppCompatActivity() {
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                loadOrderDetails(tab?.position ?: 0)
+                val position = tab?.position ?: 0
+                loadOrderDetails(position)
+
+                btnAddFood.visibility = if (position == 0) View.VISIBLE else View.GONE
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
@@ -65,6 +68,7 @@ class OrderDetailActivity : AppCompatActivity() {
             val tableNumber = intent.getIntExtra("ID_BAN",-1)
             val intent = Intent(this, FoodActivity::class.java) // Chuyển sang FoodActivity
             intent.putExtra("TABLE_NUMBER", tableNumber.toString())  // Truyền số bàn qua FoodActivity
+            intent.putExtra("ORDER_ID", orderId)
             startActivity(intent)  // Chuyển Activity
         }
     }
@@ -78,6 +82,7 @@ class OrderDetailActivity : AppCompatActivity() {
         }
 
         val items: List<OrderDetail> = dbHelper.getOrderDetailsByStatus(orderId, statusId)
+        Log.d("OrderViewModel", "Danh sách món ăn: $items")
         adapter = OrderDetailAdapter(items)
         recyclerView.adapter = adapter
 

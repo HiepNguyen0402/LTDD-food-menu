@@ -392,7 +392,7 @@ class DatabaseHelper(context: Context) :
         return orders
     }
 
-    fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int): Boolean {
+    fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int, orderDetailId: Int): Boolean {
         val db = writableDatabase
 
         val values = ContentValues().apply {
@@ -402,8 +402,8 @@ class DatabaseHelper(context: Context) :
         val rowsUpdated = db.update(
             "ChiTietDonHang",
             values,
-            "id_don_hang = ? AND id_trang_thai = ?",
-            arrayOf(orderId.toString(), currentStatus.toString())
+            "id_don_hang = ? AND id_trang_thai = ? AND id = ?",
+            arrayOf(orderId.toString(), currentStatus.toString(),orderDetailId.toString() )
         )
 
         db.close()
@@ -479,20 +479,21 @@ class DatabaseHelper(context: Context) :
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
         val query = """
-        SELECT MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
+        SELECT MonAn.ten_mon, SUM(ChiTietDonHang.so_luong), SUM(ChiTietDonHang.gia)
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
         WHERE ChiTietDonHang.id_don_hang = ? AND ChiTietDonHang.id_trang_thai = ?
-    """ // ✅ Thêm điều kiện lọc theo trạng thái món ăn
+        GROUP BY MonAn.ten_mon
+    """ // ✅ Gộp các món trùng tên
 
         val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
 
         if (cursor.moveToFirst()) {
             do {
                 val tenMon = cursor.getString(0) // Lấy tên món ăn
-                val soLuong = cursor.getInt(1)   // Lấy số lượng
-                val gia = cursor.getInt(2)       // Lấy giá
-                items.add(OrderDetail(tenMon, soLuong, gia))
+                val soLuong = cursor.getInt(1)   // Tổng số lượng
+                val gia = cursor.getInt(2)       // Tổng giá
+                items.add(OrderDetail(tenMon = tenMon, soLuong = soLuong, gia = gia))
             } while (cursor.moveToNext())
         }
         cursor.close()

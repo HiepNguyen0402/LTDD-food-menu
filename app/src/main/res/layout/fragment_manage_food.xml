@@ -37,12 +37,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edtFoodPrice"/>
 
-    <EditText
-        android:id="@+id/edtFoodImage"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Tên file hình ảnh (ví dụ: pizza.jpg)"
-        android:padding="10dp"
+    <ImageView
+        android:id="@+id/imgFood"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:scaleType="centerCrop"
+        android:background="@android:color/darker_gray"
+        android:contentDescription="Chọn hình ảnh"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edtFoodCategory"/>
@@ -55,7 +56,7 @@
         android:text="Thêm món"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/edtFoodImage"/>
+        app:layout_constraintTop_toBottomOf="@id/imgFood"/>
 
     <!-- Nút Xóa món -->
     <Button

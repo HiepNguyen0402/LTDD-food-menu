@@ -1,5 +1,6 @@
 package com.example.halidao.datmon
 
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.halidao.R
 import com.example.halidao.data.model.GioHangItem
 import com.example.halidao.data.model.MenuItem
+import java.io.File
 
 class FoodAdapter(
     private val menuList: List<MenuItem>,
@@ -40,13 +42,21 @@ class FoodAdapter(
         holder.gia.text = "${monAn.gia} VNĐ"
         holder.soLuong.text = quantity.toString()
 
-        val resourceId = holder.itemView.context.resources.getIdentifier(
-            monAn.hinhAnh, "drawable", holder.itemView.context.packageName
-        )
-        if (resourceId != 0) {
-            holder.imageView.setImageResource(resourceId)
+        val context = holder.itemView.context
+        val imageFile = File(context.filesDir, "${monAn.hinhAnh}.png")
+
+        if (imageFile.exists()) {
+            // Nếu có trong Internal Storage
+            holder.imageView.setImageURI(Uri.fromFile(imageFile))
         } else {
-            holder.imageView.setImageResource(R.drawable.macdinh) // Nếu không tìm thấy ảnh, dùng ảnh mặc định
+            // Kiểm tra trong Drawable
+            val resourceId = context.resources.getIdentifier(monAn.hinhAnh, "drawable", context.packageName)
+            if (resourceId != 0) {
+                holder.imageView.setImageResource(resourceId)
+            } else {
+                // Nếu không có, dùng ảnh mặc định
+                holder.imageView.setImageResource(R.drawable.macdinh)
+            }
         }
 
         // Cập nhật trạng thái nút "-"

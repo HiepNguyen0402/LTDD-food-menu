@@ -611,11 +611,12 @@ class DatabaseHelper(context: Context) :
         return rowsDeleted > 0
     }
 
-    fun updateFood(foodId: Int, newName: String, newPrice: Int): Boolean {
+    fun updateFood(foodId: Int, newName: String, newPrice: Int, newImage: String): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
             put("ten_mon", newName)
             put("so_tien", newPrice)
+            put("hinh_anh", newImage) // Thêm cột hình ảnh
         }
         val rowsUpdated = db.update("MonAn", values, "id = ?", arrayOf(foodId.toString()))
         db.close()

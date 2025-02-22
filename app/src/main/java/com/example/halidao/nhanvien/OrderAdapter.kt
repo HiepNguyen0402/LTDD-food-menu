@@ -38,10 +38,12 @@ class OrderAdapter(
         // Hiển thị trạng thái bàn
         holder.txtStatus.text = if (order.trangThai == 1) "Trống" else "Đang sử dụng"
 
+        // Ẩn nút cập nhật trạng thái nếu bàn đang sử dụng
+        holder.btnUpdateStatus.visibility = if (order.trangThai == 1) View.VISIBLE else View.GONE
+
         // Ẩn nút thanh toán nếu bàn trống
         holder.btnPayment.visibility = if (order.trangThai == 2) View.VISIBLE else View.GONE
 
-        holder.btnUpdateStatus.setOnClickListener { onUpdateStatus(order) }
         holder.btnPayment.setOnClickListener { onPayment(order) }
         holder.itemView.setOnClickListener { onClickOrder(order) }
     }

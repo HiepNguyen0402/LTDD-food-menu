@@ -16,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 19// Tăng version để cập nhật da tabase
+        private const val DATABASE_VERSION = 22// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -429,18 +429,19 @@ class DatabaseHelper(context: Context) :
         val db = writableDatabase
         db.beginTransaction()
         try {
-            // Cập nhật đơn hàng thành đã thanh toán
-            val values = ContentValues()
-            values.put("da_thanh_toan", 1)
-            values.put("phuong_thuc_thanh_toan", paymentMethod)
+            val values = ContentValues().apply {
+                put("da_thanh_toan", 1)  // Đánh dấu đã thanh toán
+                put("phuong_thuc_thanh_toan", paymentMethod)
+                put("id_trang_thai", 7)  // Trạng thái 7 = Đã thanh toán
+            }
             db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
 
-            // Ghi nhận vào bảng ThanhToan
-            val paymentValues = ContentValues()
-            paymentValues.put("id_don_hang", orderId)
-            paymentValues.put("ngay", System.currentTimeMillis())
-            paymentValues.put("so_tien", amount)
-            paymentValues.put("phuong_thuc", paymentMethod)
+            val paymentValues = ContentValues().apply {
+                put("id_don_hang", orderId)
+                put("ngay", System.currentTimeMillis())
+                put("so_tien", amount)
+                put("phuong_thuc", paymentMethod)
+            }
             db.insert("ThanhToan", null, paymentValues)
 
             db.setTransactionSuccessful()
@@ -486,7 +487,7 @@ class DatabaseHelper(context: Context) :
             Log.e("DatabaseHelper", "Lỗi khi thêm đơn hàng: ${e.message}")
             -1L
         } finally {
-            db.close()
+
         }
     }
 
@@ -497,23 +498,25 @@ class DatabaseHelper(context: Context) :
         SELECT ChiTietDonHang.id, MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
-        WHERE ChiTietDonHang.id_don_hang = ? AND ChiTietDonHang.id_trang_thai = ?
-    """ // ✅ Lấy thêm ID từ ChiTietDonHang
+        JOIN DonHang ON ChiTietDonHang.id_don_hang = DonHang.id  -- ✅ THÊM JOIN ĐỂ SỬ DỤNG DonHang
+        WHERE ChiTietDonHang.id_don_hang = ? AND DonHang.da_thanh_toan = 0
+    """
 
-        val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
+        val cursor = db.rawQuery(query, arrayOf(orderId.toString()))
 
         if (cursor.moveToFirst()) {
             do {
-                val id = cursor.getInt(0)        // Lấy ID món ăn trong ChiTietDonHang
-                val tenMon = cursor.getString(1) // Lấy tên món ăn
-                val soLuong = cursor.getInt(2)   // Lấy số lượng
-                val gia = cursor.getInt(3)       // Lấy giá
+                val id = cursor.getInt(0)
+                val tenMon = cursor.getString(1)
+                val soLuong = cursor.getInt(2)
+                val gia = cursor.getInt(3)
                 items.add(OrderDetail(id, tenMon, soLuong, gia))
             } while (cursor.moveToNext())
         }
         cursor.close()
         return items
     }
+
 
     fun getAllMenuItems(): List<MenuItem> {
         val menuItems = mutableListOf<MenuItem>()
@@ -611,11 +614,12 @@ class DatabaseHelper(context: Context) :
         return rowsDeleted > 0
     }
 
-    fun updateFood(foodId: Int, newName: String, newPrice: Int): Boolean {
+    fun updateFood(foodId: Int, newName: String, newPrice: Int, newImage: String): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
             put("ten_mon", newName)
             put("so_tien", newPrice)
+            put("hinh_anh", newImage) // Thêm cột hình ảnh
         }
         val rowsUpdated = db.update("MonAn", values, "id = ?", arrayOf(foodId.toString()))
         db.close()

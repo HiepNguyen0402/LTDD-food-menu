@@ -135,7 +135,7 @@ class OrderDetailActivity : AppCompatActivity() {
         }
 
         // Xóa chi tiết đơn hàng cũ để tránh lỗi hiển thị
-        dbHelper.deleteOrderDetails(orderId)
+        dbHelper.updateOrderAsPaid(orderId)
 
         // ✅ Cập nhật trạng thái bàn về "Trống"
         dbHelper.updateTableStatus(idBan, 1)

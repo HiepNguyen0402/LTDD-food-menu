@@ -59,20 +59,34 @@ class OrderActivity : AppCompatActivity() {
             onPayment = { order ->
                 val success = dataHelper.payOrder(order.id, order.tongTien, "Tiền mặt")
                 if (success) {
-                    dataHelper.deleteOrderDetails(order.id) // Xóa chi tiết đơn hàng cũ
-                    dataHelper.deleteOldOrdersForTable(order.idBan)
-                    dataHelper.updateTableStatus(order.idBan, 1)
-                    dataHelper.insertOrder(order.idBan, null, 0, 1)
+                    dataHelper.updateOrderAsPaid(order.id) // Đánh dấu đơn hàng cũ là đã thanh toán
+                    dataHelper.updateTableStatus(order.idBan, 1) // Đặt bàn về trạng thái "Trống"
 
-                    loadOrders(tabLayout.selectedTabPosition)
+                    // ✅ Thay vì xóa đơn cũ, tạo đơn hàng mới ngay sau khi thanh toán
+                    val newOrderId = dataHelper.insertOrder(order.idBan, null, 0, 2) // Tạo đơn hàng mới cho bàn
+
+                    if (newOrderId != -1L) {
+                        Log.d("Order", "Đã tạo đơn hàng mới với ID: $newOrderId")
+                    } else {
+                        Log.e("Order", "Không thể tạo đơn hàng mới!")
+                    }
+
+                    loadOrders(tabLayout.selectedTabPosition) // Cập nhật danh sách
                 }
-            },
-            onClickOrder = { order ->
-                val intent = Intent(this, OrderDetailActivity::class.java)
-                intent.putExtra("ORDER_ID", order.id)
-                intent.putExtra("ID_BAN", order.idBan)
-                startActivity(intent)
             }
+
+            ,
+            onClickOrder = { order ->
+                if (order.trangThai == 2) { // Chỉ cho phép bấm vào nếu bàn đang sử dụng
+                    val intent = Intent(this, OrderDetailActivity::class.java)
+                    intent.putExtra("ORDER_ID", order.id)
+                    intent.putExtra("ID_BAN", order.idBan)
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "Bàn trống, không có đơn hàng!", Toast.LENGTH_SHORT).show()
+                }
+            }
+
         )
 
         recyclerView.adapter = orderAdapter

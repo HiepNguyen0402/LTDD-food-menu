@@ -122,6 +122,7 @@ class OrderDetailActivity : AppCompatActivity() {
         }
     }
 
+
     private fun processPayment() {
         if (idBan == -1) {
             Toast.makeText(this, "Lỗi: Không xác định được bàn!", Toast.LENGTH_SHORT).show()

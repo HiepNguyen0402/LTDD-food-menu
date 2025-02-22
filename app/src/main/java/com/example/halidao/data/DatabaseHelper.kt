@@ -409,21 +409,23 @@ class DatabaseHelper(context: Context) :
 
     fun updateOrderStatus(orderId: Int, currentStatus: Int, newStatus: Int, orderDetailId: Int): Boolean {
         val db = writableDatabase
-
         val values = ContentValues().apply {
-            put("id_trang_thai", newStatus) // ✅ Cập nhật trạng thái món ăn trong `ChiTietDonHang`
+            put("id_trang_thai", newStatus)
         }
 
         val rowsUpdated = db.update(
             "ChiTietDonHang",
             values,
             "id_don_hang = ? AND id_trang_thai = ? AND id = ?",
-            arrayOf(orderId.toString(), currentStatus.toString(),orderDetailId.toString() )
+            arrayOf(orderId.toString(), currentStatus.toString(), orderDetailId.toString())
         )
+
+        Log.d("DatabaseHelper", "Update order detail: orderId=$orderId, orderDetailId=$orderDetailId, from $currentStatus to $newStatus, rows updated: $rowsUpdated")
 
         db.close()
         return rowsUpdated > 0
     }
+
 
     fun payOrder(orderId: Int, amount: Int, paymentMethod: String): Boolean {
         val db = writableDatabase
@@ -490,19 +492,18 @@ class DatabaseHelper(context: Context) :
 
         }
     }
-
     fun getOrderDetailsByStatus(orderId: Int, status: Int): List<OrderDetail> {
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
         val query = """
-        SELECT ChiTietDonHang.id, MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia 
+        SELECT ChiTietDonHang.id, MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia, ChiTietDonHang.id_trang_thai 
         FROM ChiTietDonHang 
         JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
-        JOIN DonHang ON ChiTietDonHang.id_don_hang = DonHang.id  -- ✅ THÊM JOIN ĐỂ SỬ DỤNG DonHang
-        WHERE ChiTietDonHang.id_don_hang = ? AND DonHang.da_thanh_toan = 0
+        JOIN DonHang ON ChiTietDonHang.id_don_hang = DonHang.id  
+        WHERE ChiTietDonHang.id_don_hang = ? AND DonHang.da_thanh_toan = 0 AND ChiTietDonHang.id_trang_thai = ?
     """
 
-        val cursor = db.rawQuery(query, arrayOf(orderId.toString()))
+        val cursor = db.rawQuery(query, arrayOf(orderId.toString(), status.toString()))
 
         if (cursor.moveToFirst()) {
             do {
@@ -510,12 +511,14 @@ class DatabaseHelper(context: Context) :
                 val tenMon = cursor.getString(1)
                 val soLuong = cursor.getInt(2)
                 val gia = cursor.getInt(3)
-                items.add(OrderDetail(id, tenMon, soLuong, gia))
+                val trangThai = cursor.getInt(4) // ✅ Thêm trạng thái để đảm bảo dữ liệu đúng
+                items.add(OrderDetail(id, tenMon, soLuong, gia, trangThai))
             } while (cursor.moveToNext())
         }
         cursor.close()
         return items
     }
+
 
 
     fun getAllMenuItems(): List<MenuItem> {

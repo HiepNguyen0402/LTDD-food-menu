@@ -1,6 +1,7 @@
 data class OrderDetail(
-    val orderDetailId: Int = 0,  // Thêm ID để xác định từng món
+    val orderDetailId: Int,
     val tenMon: String,
     val soLuong: Int,
-    val gia: Int
+    val gia: Int,
+    val trangThai: Int  // ✅ Thêm trạng thái vào đây
 )

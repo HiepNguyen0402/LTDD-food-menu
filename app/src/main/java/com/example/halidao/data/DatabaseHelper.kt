@@ -16,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 22// Tăng version để cập nhật da tabase
+        private const val DATABASE_VERSION = 32// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -143,7 +143,7 @@ class DatabaseHelper(context: Context) :
 
         db.execSQL("""
             INSERT INTO NhanVien (ten, sdt, email, mat_khau, id_role) 
-            VALUES ('Admin', '0123456789', 'admin@example.com', '123456', 
+            VALUES ('Admin', '0123456789', 'buitantai2704@gmail.com', '123456', 
                 (SELECT id FROM Role WHERE ten_role = 'Quản lý' LIMIT 1));
         """)
         db.execSQL("""
@@ -221,7 +221,8 @@ class DatabaseHelper(context: Context) :
         INSERT INTO DonHang (id_ban, id_khach_hang, ngay, tong_tien, id_trang_thai, da_thanh_toan, phuong_thuc_thanh_toan) VALUES 
         (1, 4, strftime('%s','now'), 50000, 2, 0, NULL),
         (2, 5, strftime('%s','now'), 60000, 2, 0, NULL),
-        (3, NULL, strftime('%s','now'), 70000, 2, 0, 'Tiền mặt');
+        (3, NULL, strftime('%s','now'), 70000, 2, 0, NULL), (1,NULL, strftime('%s', '2025-01-15 12:00:00'), 70000, 2, 1, 'Tiền mặt'), -- Tháng 1
+        (2,NULL ,strftime('%s', '2025-03-10 15:30:00'), 7204, 2, 1, 'Tiền mặt');
     """)
 
         // Thêm dữ liệu mẫu vào Bảng Chi Tiết Đơn Hàng
@@ -467,14 +468,13 @@ class DatabaseHelper(context: Context) :
         return rowsUpdated > 0
     }
 
-    fun insertOrder(idBan: Int, idKhachHang: Int?, tongTien: Int, trangThai: Int): Long {
+    fun insertOrder(idBan: Int, ngay: Long?, tongTien: Int, trangThai: Int): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
             put("id_ban", idBan)
-            put("id_khach_hang", idKhachHang) // Thêm id khách hàng (nếu có)
+            put("ngay", ngay ?: System.currentTimeMillis() / 1000) // ✅ Luôn lưu timestamp (INTEGER)
             put("tong_tien", tongTien)
             put("id_trang_thai", trangThai)
-            put("ngay", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())) // Định dạng ngày
         }
 
         return try {
@@ -488,13 +488,13 @@ class DatabaseHelper(context: Context) :
         } catch (e: Exception) {
             Log.e("DatabaseHelper", "Lỗi khi thêm đơn hàng: ${e.message}")
             -1L
-        } finally {
-
         }
     }
+
     fun getOrderDetailsByStatus(orderId: Int, status: Int): List<OrderDetail> {
         val items = mutableListOf<OrderDetail>()
         val db = readableDatabase
+
         val query = """
         SELECT ChiTietDonHang.id, MonAn.ten_mon, ChiTietDonHang.so_luong, ChiTietDonHang.gia, ChiTietDonHang.id_trang_thai 
         FROM ChiTietDonHang 
@@ -515,6 +515,8 @@ class DatabaseHelper(context: Context) :
                 items.add(OrderDetail(id, tenMon, soLuong, gia, trangThai))
             } while (cursor.moveToNext())
         }
+        Log.d("DatabaseHelper", "Lấy món từ DB: orderId=$orderId, statusId=$status")
+
         cursor.close()
         return items
     }
@@ -639,18 +641,26 @@ class DatabaseHelper(context: Context) :
         }
         return db.insert("MonAn", null, values)
     }
-
     fun getRevenueStatistics(): List<Statistics> {
         val statisticsList = mutableListOf<Statistics>()
         val db = readableDatabase
         val cursor = db.rawQuery(
-            "SELECT strftime('%Y-%m', ngay) AS month, COALESCE(SUM(tong_tien), 0) FROM DonHang GROUP BY month ORDER BY month DESC",
+            "SELECT strftime('%Y-%m', " +
+                    "   CASE " +
+                    "       WHEN typeof(ngay) = 'integer' THEN datetime(ngay, 'unixepoch', 'localtime') " +
+                    "       ELSE ngay " +
+                    "   END) AS month, " +
+                    "   COALESCE(SUM(tong_tien), 0) " +
+                    "FROM DonHang " +
+                    "WHERE ngay IS NOT NULL " +
+                    "GROUP BY month " +
+                    "ORDER BY month DESC",
             null
         )
 
         while (cursor.moveToNext()) {
-            val month = cursor.getString(0) ?: "N/A"  // Nếu null, trả về "N/A"
-            val revenue = cursor.getInt(1)            // Nếu SUM() null, COALESCE sẽ trả về 0
+            val month = cursor.getString(0) ?: "Không có dữ liệu"
+            val revenue = cursor.getInt(1)
             statisticsList.add(Statistics(month, revenue))
         }
 
@@ -658,6 +668,9 @@ class DatabaseHelper(context: Context) :
         db.close()
         return statisticsList
     }
+
+
+
 
     fun getTotalRevenue(): Int {
         val db = readableDatabase
@@ -673,7 +686,7 @@ class DatabaseHelper(context: Context) :
 
     fun getTotalOrders(): Int {
         val db = readableDatabase
-        val cursor = db.rawQuery("SELECT COUNT(*) FROM DonHang", null)
+        val cursor = db.rawQuery("SELECT COUNT(*) FROM DonHang WHERE id_trang_thai != 7", null) // Loại bỏ đơn hàng đã thanh toán
         var totalOrders = 0
         if (cursor.moveToFirst()) {
             totalOrders = cursor.getInt(0)
@@ -682,6 +695,7 @@ class DatabaseHelper(context: Context) :
         db.close()
         return totalOrders
     }
+
 
     fun getRevenueByCategory(): Map<String, Int> {
         val revenueMap = mutableMapOf<String, Int>()
@@ -835,4 +849,49 @@ class DatabaseHelper(context: Context) :
         db.close()
         return rowsUpdated > 0
     }
+    fun getLatestUnpaidOrder(idBan: Int): Int {
+        Log.d("DatabaseHelper", "🔥 Gọi getLatestUnpaidOrder() cho bàn $idBan") // ✅ Debug
+
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT id FROM DonHang WHERE id_ban = ? AND id_trang_thai != 7 ORDER BY id DESC LIMIT 1",
+            arrayOf(idBan.toString())
+        )
+
+        val orderId = if (cursor.moveToFirst()) cursor.getInt(0) else -1
+        cursor.close()
+
+        Log.d("DatabaseHelper", "✅ Lấy orderId mới nhất: $orderId cho bàn $idBan") // ✅ Debug
+        return orderId
+    }
+
+
+    fun isOrderPaid(orderId: Int): Boolean {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT da_thanh_toan FROM DonHang WHERE id = ?", arrayOf(orderId.toString()))
+        var isPaid = false
+        if (cursor.moveToFirst()) {
+            isPaid = cursor.getInt(0) == 1
+        }
+        cursor.close()
+        db.close()
+        return isPaid
+    }
+    fun areAllItemsCompleted(orderId: Int): Boolean {
+        val db = readableDatabase
+        val query = "SELECT COUNT(*) FROM ChiTietDonHang WHERE id_don_hang = ? AND id_trang_thai != 6"
+        val cursor = db.rawQuery(query, arrayOf(orderId.toString()))
+
+        var count = 0
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0)
+        }
+
+        cursor.close()
+        db.close()
+
+        return count == 0 // ✅ Nếu không còn món nào chưa hoàn thành, trả về true
+    }
+
+
 }

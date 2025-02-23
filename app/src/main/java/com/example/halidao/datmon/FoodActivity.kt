@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,6 +27,12 @@ class FoodActivity : AppCompatActivity() {
             // Lấy số bàn từ Intent
             val tableNumber = intent.getStringExtra("TABLE_NUMBER")
             val orderId = intent.getIntExtra("ORDER_ID", -1)
+            if (orderId == -1) {
+                Toast.makeText(this, "Không tìm thấy đơn hàng hợp lệ!", Toast.LENGTH_SHORT).show()
+                finish() // Đóng Activity
+                return
+            }
+
             if (tableNumber.isNullOrEmpty()) {
                 // Nếu không có số bàn, thông báo lỗi và đóng Activity
                 finish()

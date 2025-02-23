@@ -62,8 +62,9 @@ class OrderActivity : AppCompatActivity() {
                     dataHelper.updateOrderAsPaid(order.id) // Đánh dấu đơn hàng cũ là đã thanh toán
                     dataHelper.updateTableStatus(order.idBan, 1) // Đặt bàn về trạng thái "Trống"
 
-                    // ✅ Thay vì xóa đơn cũ, tạo đơn hàng mới ngay sau khi thanh toán
-                    val newOrderId = dataHelper.insertOrder(order.idBan, null, 0, 2) // Tạo đơn hàng mới cho bàn
+                    // ✅ Đảm bảo `ngay` được lưu dưới dạng timestamp
+                    val timestamp = System.currentTimeMillis() / 1000 // Chuyển thành UNIX timestamp
+                    val newOrderId = dataHelper.insertOrder(order.idBan, timestamp, 0, 2) // Chuyển `ngay = timestamp`
 
                     if (newOrderId != -1L) {
                         Log.d("Order", "Đã tạo đơn hàng mới với ID: $newOrderId")
@@ -74,6 +75,7 @@ class OrderActivity : AppCompatActivity() {
                     loadOrders(tabLayout.selectedTabPosition) // Cập nhật danh sách
                 }
             }
+
 
             ,
             onClickOrder = { order ->

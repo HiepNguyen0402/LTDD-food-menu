@@ -1,6 +1,7 @@
 package com.example.halidao.nhanvien
 
 import Order
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,21 +33,30 @@ class OrderAdapter(
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
         val order = orders[position]
 
+        // Thêm log để kiểm tra trạng thái bàn
+        Log.d("OrderAdapter", "Bàn ${order.idBan} - Trạng thái: ${order.trangThai}")
+
         holder.txtTable.text = "Bàn: ${order.idBan}"
         holder.txtTotal.text = "Tổng tiền: ${order.tongTien} VND"
 
         // Hiển thị trạng thái bàn
         holder.txtStatus.text = if (order.trangThai == 1) "Trống" else "Đang sử dụng"
 
-        // Ẩn nút cập nhật trạng thái nếu bàn đang sử dụng
+        // Kiểm tra xem nút cập nhật có bị ẩn sai không
         holder.btnUpdateStatus.visibility = if (order.trangThai == 1) View.VISIBLE else View.GONE
 
         // Ẩn nút thanh toán nếu bàn trống
         holder.btnPayment.visibility = if (order.trangThai == 2) View.VISIBLE else View.GONE
 
+        holder.btnUpdateStatus.setOnClickListener {
+            Log.d("OrderAdapter", "Cập nhật trạng thái bàn ${order.idBan}")
+            onUpdateStatus(order)
+        }
+
         holder.btnPayment.setOnClickListener { onPayment(order) }
         holder.itemView.setOnClickListener { onClickOrder(order) }
     }
+
 
     fun updateData(newOrders: List<Order>) {
         orders = newOrders

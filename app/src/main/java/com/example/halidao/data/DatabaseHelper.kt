@@ -16,7 +16,7 @@ class DatabaseHelper(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "halidao_database.db" // Tên database
-        private const val DATABASE_VERSION = 32// Tăng version để cập nhật da tabase
+        private const val DATABASE_VERSION = 37// Tăng version để cập nhật da tabase
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -432,9 +432,9 @@ class DatabaseHelper(context: Context) :
         db.beginTransaction()
         try {
             val values = ContentValues().apply {
-                put("da_thanh_toan", 1)  // Đánh dấu đã thanh toán
-                put("phuong_thuc_thanh_toan", paymentMethod)
-                put("id_trang_thai", 7)  // Trạng thái 7 = Đã thanh toán
+                put("da_thanh_toan", 1)
+                put("phuong_thuc_thanh_toan", paymentMethod)  // Lưu phương thức thanh toán
+                put("id_trang_thai", 7)  // Trạng thái "Đã thanh toán"
             }
             db.update("DonHang", values, "id = ?", arrayOf(orderId.toString()))
 
@@ -456,6 +456,7 @@ class DatabaseHelper(context: Context) :
             db.close()
         }
     }
+
 
     fun markOrderAsPaid(orderId: Int): Boolean {
         val db = writableDatabase
@@ -557,7 +558,7 @@ class DatabaseHelper(context: Context) :
             }
             db.update("BanAn", tableValues, "id = ?", arrayOf(tableId.toString()))
 
-            // ✅ Nếu bàn chuyển về "Trống", cập nhật trạng thái hóa đơn thành 7 (Đã thanh toán)
+            // ✅ Nếu bàn chuyển về "Trống", không tạo đơn hàng mới ngay lập tức
             if (newStatusId == 1) { // 1 = Bàn trống
                 val orderValues = ContentValues().apply {
                     put("id_trang_thai", 7) // ✅ Đánh dấu đơn hàng là "Đã thanh toán"
@@ -574,6 +575,7 @@ class DatabaseHelper(context: Context) :
             db.close()
         }
     }
+
 
     fun getOrdersByTableStatus(statusId: Int): List<Order> {
         val orders = mutableListOf<Order>()
@@ -1048,6 +1050,20 @@ class DatabaseHelper(context: Context) :
         }
         cursor.close()
         return list
+    }
+    fun getTotalAmount(orderId: Int): Int {
+        val db = readableDatabase
+        val query = "SELECT SUM(gia * so_luong) FROM ChiTietDonHang WHERE id_don_hang = ?"
+        val cursor = db.rawQuery(query, arrayOf(orderId.toString()))
+
+        var totalAmount = 0
+        if (cursor.moveToFirst()) {
+            totalAmount = cursor.getInt(0)
+        }
+
+        cursor.close()
+        db.close()
+        return totalAmount
     }
 
 }

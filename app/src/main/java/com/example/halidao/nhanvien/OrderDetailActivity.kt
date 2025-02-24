@@ -3,17 +3,26 @@ package com.example.halidao.nhanvien
 import DatabaseHelper
 import OrderDetail
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.halidao.R
 import com.google.android.material.tabs.TabLayout
 import com.example.halidao.datmon.FoodActivity
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
+import com.squareup.picasso.Picasso
+import java.nio.charset.StandardCharsets
+import java.util.Locale
 
 class OrderDetailActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
@@ -149,40 +158,88 @@ class OrderDetailActivity : AppCompatActivity() {
             Toast.makeText(this, "Lỗi: Không xác định được bàn!", Toast.LENGTH_SHORT).show()
             return
         }
+        val totalAmount = dbHelper.getTotalAmount(orderId) // 🔥 Gọi hàm vừa tạo để lấy tổng tiền
+        val paymentMethods = arrayOf("Tiền mặt", "Chuyển khoản")
 
-        // ✅ Cập nhật đơn hàng cũ là "Đã thanh toán"
-        val updated = dbHelper.updateOrderAsPaid(orderId)
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Chọn phương thức thanh toán")
+            .setItems(paymentMethods) { _, which ->
+                val selectedMethod = paymentMethods[which]
+                if (selectedMethod == "Chuyển khoản") {
+                    showQRCodeDialog(orderId, totalAmount)
+                } else {
+                    confirmPayment(selectedMethod)
+                }
+            }
+            .show()
+    }
+    private fun showQRCodeDialog(orderId: Int, amount: Int) {
+        val qrCodeData = generateQRCodeData(orderId, amount)
+        val imageView = ImageView(this)
+        Picasso.get().load(qrCodeData).into(imageView)
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Quét mã QR để thanh toán")
+            .setView(imageView)
+            .setPositiveButton("Đã chuyển khoản") { _, _ ->
+                confirmPayment("Chuyển khoản") // ✅ Khách tự xác nhận thanh toán
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+    }
+
+
+    private fun generateQRCodeData(orderId: Int, amount: Int): String {
+        val transferMessage = "Thanh toan don hang #$orderId".replace(" ", "%20")
+        val bankCode = "ACB" // ✅ Mã ngân hàng ACB
+        val accountNumber = "12264277" // ✅ Số tài khoản ACB của bạn
+
+        // ✅ Sử dụng API VietQR chính thức để tạo mã QR hợp lệ
+        return "https://img.vietqr.io/image/$bankCode-$accountNumber-qr_only.png?amount=$amount&addInfo=$transferMessage"
+    }
+
+
+
+    private fun generateQRCodeBitmap(data: String): Bitmap {
+        val qrCodeWriter = QRCodeWriter()
+        val bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, 500, 500)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bmp.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+            }
+        }
+
+        return bmp
+    }
+
+
+    private fun confirmPayment(paymentMethod: String) {
+        val totalAmount = dbHelper.getTotalAmount(orderId) // 🔥 Gọi hàm để lấy tổng tiền
+        val updated = dbHelper.payOrder(orderId, totalAmount, paymentMethod)
+
         if (!updated) {
             Toast.makeText(this, "Lỗi: Không thể cập nhật trạng thái thanh toán!", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // ✅ Cập nhật trạng thái bàn thành "Trống"
-        dbHelper.updateTableStatus(idBan, 1)
-
-        // ✅ Tạo đơn hàng mới cho bàn này
-        val timestamp = System.currentTimeMillis() / 1000 // Chuyển thành UNIX timestamp
+        dbHelper.updateTableStatus(idBan, 1) // Đặt bàn về trạng thái "Trống"
+        val timestamp = System.currentTimeMillis() / 1000
         val newOrderId = dbHelper.insertOrder(idBan, timestamp, 0, 2)
 
         if (newOrderId != -1L) {
-            Log.d("OrderDetailActivity", "✅ Đã tạo đơn hàng mới với ID: $newOrderId")
-
-            // ✅ Cập nhật lại orderId mới
             orderId = newOrderId.toInt()
-
-            // ✅ Load lại danh sách món ăn với đơn hàng mới
             loadOrderDetails(0)
-        } else {
-            Log.e("OrderDetailActivity", "❌ Không thể tạo đơn hàng mới!")
         }
 
-
-
-        // ✅ Quay về `OrderActivity`
         val intent = Intent(this, OrderActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
         startActivity(intent)
         finish()
     }
+
 
 }

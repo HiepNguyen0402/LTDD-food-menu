@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,7 +22,7 @@ class ManageStaffFragment : Fragment() {
     private lateinit var edtStaffName: EditText
     private lateinit var edtStaffPhone: EditText
     private lateinit var edtStaffEmail: EditText
-    private lateinit var edtStaffRole: EditText
+    private lateinit var spinnerStaffRole: Spinner
     private lateinit var btnSaveStaff: Button
     private lateinit var recyclerView: RecyclerView
     private lateinit var databaseHelper: DatabaseHelper
@@ -33,7 +35,13 @@ class ManageStaffFragment : Fragment() {
         edtStaffName = view.findViewById(R.id.edtStaffName)
         edtStaffPhone = view.findViewById(R.id.edtStaffPhone)
         edtStaffEmail = view.findViewById(R.id.edtStaffEmail)
-        edtStaffRole = view.findViewById(R.id.edtStaffRole)
+        spinnerStaffRole = view.findViewById(R.id.spinnerStaffRole)
+
+// Tạo Adapter cho Spinner
+        val roles = resources.getStringArray(R.array.staff_roles)
+        val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, roles)
+        spinnerStaffRole.adapter = adapterSpinner
+
         btnSaveStaff = view.findViewById(R.id.btnSaveStaff)
         recyclerView = view.findViewById(R.id.recyclerViewStaff)
 
@@ -61,33 +69,41 @@ class ManageStaffFragment : Fragment() {
         val name = edtStaffName.text.toString()
         val phone = edtStaffPhone.text.toString()
         val email = edtStaffEmail.text.toString()
-        val role = edtStaffRole.text.toString()
+        val roleIndex = spinnerStaffRole.selectedItemPosition + 1 // ID role bắt đầu từ 1
 
-        if (name.isEmpty() || phone.isEmpty() || email.isEmpty() || role.isEmpty()) {
+        if (name.isEmpty() || phone.isEmpty() || email.isEmpty()) {
             Toast.makeText(requireContext(), "Vui lòng nhập đầy đủ thông tin!", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (selectedStaffId == null) {
-            databaseHelper.insertStaff(Staff(0, name, phone, email, "123456", role.toInt()))
+            databaseHelper.insertStaff(Staff(0, name, phone, email, "123456", roleIndex))
             Toast.makeText(requireContext(), "Thêm nhân viên thành công!", Toast.LENGTH_SHORT).show()
         } else {
-            databaseHelper.updateStaff(selectedStaffId!!, name, phone, email, role.toInt())
+            databaseHelper.updateStaff(selectedStaffId!!, name, phone, email, roleIndex)
             Toast.makeText(requireContext(), "Cập nhật thành công!", Toast.LENGTH_SHORT).show()
             selectedStaffId = null
             btnSaveStaff.text = "Thêm nhân viên"
         }
-
+        clearInputs()
         loadStaffList()
     }
-
     private fun onStaffSelected(staff: Staff) {
         selectedStaffId = staff.id
         edtStaffName.setText(staff.ten)
         edtStaffPhone.setText(staff.sdt)
         edtStaffEmail.setText(staff.email)
-        edtStaffRole.setText(staff.idRole.toString())
+
+        // ✅ Chọn đúng role trong Spinner
+        spinnerStaffRole.setSelection(staff.idRole - 1)
+
         btnSaveStaff.text = "Cập nhật nhân viên"
+    }
+    private fun clearInputs() {
+        edtStaffName.text.clear()
+        edtStaffPhone.text.clear()
+        edtStaffEmail.text.clear()
+        spinnerStaffRole.setSelection(0) // ✅ Chọn về "Quản lý" mặc định
     }
     private fun onStaffDeleted(staffId: Int) {
         AlertDialog.Builder(requireContext())
@@ -95,6 +111,7 @@ class ManageStaffFragment : Fragment() {
             .setMessage("Bạn có chắc muốn xóa nhân viên này?")
             .setPositiveButton("Xóa") { _, _ ->
                 databaseHelper.deleteStaff(staffId)
+                clearInputs()
                 loadStaffList() // Cập nhật lại danh sách nhân viên sau khi xóa
             }
             .setNegativeButton("Hủy", null)

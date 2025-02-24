@@ -23,7 +23,8 @@ class ManageActivity : AppCompatActivity() {
                 0 -> "Món Ăn"
                 1 -> "Nhân Viên"
                 2 -> "Thống Kê"
-                else -> "Khác"
+                else -> throw IllegalStateException("Vị trí tab không hợp lệ: $position") // Bắt lỗi nếu có tab dư
+
             }
         }.attach()
     }

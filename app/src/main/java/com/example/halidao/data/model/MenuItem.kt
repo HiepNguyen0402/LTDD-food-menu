@@ -8,5 +8,5 @@ data class MenuItem(
     val tenMon: String,
     val gia: Int,
     val hinhAnh: String,
-    val danhMuc: String // Thêm danh mục
+    val danhMuc: Int // Thêm danh mục
 )

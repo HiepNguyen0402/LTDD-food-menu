@@ -32,21 +32,22 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edtStaffPhone"/>
 
-    <EditText
-        android:id="@+id/edtStaffRole"
+    <Spinner
+        android:id="@+id/spinnerStaffRole"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Chức vụ (ID Role)"
+        android:entries="@array/staff_roles"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edtStaffEmail"/>
+
 
     <Button
         android:id="@+id/btnSaveStaff"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Thêm nhân viên"
-        app:layout_constraintTop_toBottomOf="@id/edtStaffRole"
+        app:layout_constraintTop_toBottomOf="@id/spinnerStaffRole"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 

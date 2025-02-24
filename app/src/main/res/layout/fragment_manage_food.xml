@@ -27,15 +27,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edtFoodName"/>
 
-    <EditText
-        android:id="@+id/edtFoodCategory"
+    <Spinner
+        android:id="@+id/spinnerFoodCategory"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Danh mục món ăn"
         android:padding="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edtFoodPrice"/>
+
 
     <ImageView
         android:id="@+id/imgFood"
@@ -46,7 +46,7 @@
         android:contentDescription="Chọn hình ảnh"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/edtFoodCategory"/>
+        app:layout_constraintTop_toBottomOf="@id/spinnerFoodCategory"/>
 
     <!-- Nút Thêm / Cập nhật món -->
     <Button

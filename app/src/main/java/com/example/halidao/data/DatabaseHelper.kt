@@ -527,10 +527,9 @@ class DatabaseHelper(context: Context) :
         val menuItems = mutableListOf<MenuItem>()
         val db = readableDatabase
         val query = """
-        SELECT MonAn.id, MonAn.ten_mon, MonAn.so_tien, MonAn.hinh_anh, DanhMuc.danh_muc 
+        SELECT MonAn.id, MonAn.ten_mon, MonAn.so_tien, MonAn.hinh_anh, MonAn.id_danh_muc 
         FROM MonAn
-        JOIN DanhMuc ON MonAn.id_danh_muc = DanhMuc.id
-    """
+    """  // ✅ Sửa lỗi: Lấy đúng id_danh_muc
         val cursor = db.rawQuery(query, null)
 
         while (cursor.moveToNext()) {
@@ -539,7 +538,7 @@ class DatabaseHelper(context: Context) :
                 tenMon = cursor.getString(1),
                 gia = cursor.getInt(2),
                 hinhAnh = cursor.getString(3),
-                danhMuc = cursor.getString(4)
+                danhMuc = cursor.getInt(4) // ✅ Đã sửa: Giữ nguyên ID danh mục (INT)
             )
             menuItems.add(menuItem)
         }
@@ -547,6 +546,7 @@ class DatabaseHelper(context: Context) :
         Log.d("DatabaseHelper", "Lấy danh sách món ăn thành công: $menuItems")
         return menuItems
     }
+
 
     fun updateTableStatus(tableId: Int, newStatusId: Int): Boolean {
         val db = writableDatabase
@@ -619,16 +619,18 @@ class DatabaseHelper(context: Context) :
         return rowsDeleted > 0
     }
 
-    fun updateFood(foodId: Int, newName: String, newPrice: Int, newImage: String): Boolean {
+    fun updateFood(id: Int, tenMon: String, gia: Int, hinhAnh: String, idDanhMuc: Int): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
-            put("ten_mon", newName)
-            put("so_tien", newPrice)
-            put("hinh_anh", newImage) // Thêm cột hình ảnh
+            put("ten_mon", tenMon)
+            put("so_tien", gia)  // ⛔ LỖI cũ là `gia` nhưng đúng là `so_tien`
+            put("hinh_anh", hinhAnh)
+            put("id_danh_muc", idDanhMuc)  // ✅ Lưu ID danh mục đúng cách
         }
-        val rowsUpdated = db.update("MonAn", values, "id = ?", arrayOf(foodId.toString()))
+
+        val result = db.update("MonAn", values, "id = ?", arrayOf(id.toString()))
         db.close()
-        return rowsUpdated > 0
+        return result > 0
     }
 
     fun insertFood(food: MenuItem): Long {
@@ -893,5 +895,46 @@ class DatabaseHelper(context: Context) :
         return count == 0 // ✅ Nếu không còn món nào chưa hoàn thành, trả về true
     }
 
+    fun getFoodImageById(foodId: Int): String {
+        val db = readableDatabase
+        var imageName = ""
+        val query = "SELECT hinh_anh FROM MonAn WHERE id = ?"
+        val cursor = db.rawQuery(query, arrayOf(foodId.toString()))
+
+        if (cursor.moveToFirst()) {
+            imageName = cursor.getString(0) ?: "" // Lấy tên ảnh từ database
+        }
+
+        cursor.close()
+        return imageName
+    }
+
+    fun getCategoryNameById(categoryId: Int): String? {
+        val db = readableDatabase
+        val query = "SELECT danh_muc FROM DanhMuc WHERE id = ?"
+        val cursor = db.rawQuery(query, arrayOf(categoryId.toString()))
+
+        var categoryName: String? = null
+        if (cursor.moveToFirst()) {
+            categoryName = cursor.getString(0)  // Lấy tên danh mục
+        }
+        cursor.close()
+        return categoryName
+    }
+    fun getAllCategories(): List<Pair<Int, String>> {
+        val categories = mutableListOf<Pair<Int, String>>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT id, danh_muc FROM DanhMuc", null)
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getInt(0)
+            val name = cursor.getString(1)
+            categories.add(Pair(id, name))
+        }
+
+        cursor.close()
+        db.close()
+        return categories
+    }
 
 }

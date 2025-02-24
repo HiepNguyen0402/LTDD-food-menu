@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">halidao</string>
+    <string-array name="food_categories">
+        <item>Khai vị</item>
+        <item>Món chính</item>
+        <item>Tráng miệng</item>
+        <item>Đồ uống</item>
+    </string-array>
+    <string-array name="staff_roles">
+        <item>Quản lý</item>
+        <item>Nhân viên</item>
+    </string-array>
+
 </resources>

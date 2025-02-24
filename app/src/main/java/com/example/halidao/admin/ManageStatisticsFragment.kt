@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -160,42 +161,72 @@ class ManageStatisticsFragment : Fragment() {
 
         try {
             val workbook = XSSFWorkbook()
-            val sheet = workbook.createSheet("Thống kê chi tiết")
 
-            // Thêm tiêu đề
-            val headerRow = sheet.createRow(0)
-            headerRow.createCell(0).setCellValue("Ngày")
-            headerRow.createCell(1).setCellValue("Tổng đơn hàng")
-            headerRow.createCell(2).setCellValue("Doanh thu (VND)")
+            // 📌 **1️⃣ Sheet 1: Tổng quan doanh thu**
+            val sheet1 = workbook.createSheet("Thống kê chi tiết")
+            val headerRow1 = sheet1.createRow(0)
+            headerRow1.createCell(0).setCellValue("Ngày")
+            headerRow1.createCell(1).setCellValue("Tổng đơn hàng")
+            headerRow1.createCell(2).setCellValue("Doanh thu (VND)")
 
-            // Lấy dữ liệu thống kê từ database
             val revenueList = databaseHelper.getDailyRevenue()
             for ((index, data) in revenueList.withIndex()) {
-                val row = sheet.createRow(index + 1)
+                val row = sheet1.createRow(index + 1)
                 row.createCell(0).setCellValue(data.first) // Ngày
                 row.createCell(1).setCellValue(databaseHelper.getTotalOrders().toDouble()) // Tổng đơn hàng
                 row.createCell(2).setCellValue(data.second.toDouble()) // Doanh thu
             }
 
-            // Thêm tiêu đề danh sách đơn hàng chi tiết
-            val orderSheet = workbook.createSheet("Danh sách đơn hàng")
-            val orderHeader = orderSheet.createRow(0)
-            orderHeader.createCell(0).setCellValue("Mã đơn hàng")
-            orderHeader.createCell(1).setCellValue("Ngày")
-            orderHeader.createCell(2).setCellValue("Tổng tiền")
-            orderHeader.createCell(3).setCellValue("Trạng thái")
 
-            // Lấy danh sách đơn hàng từ database
-            val orders = databaseHelper.getAllOrders()
-            for ((index, order) in orders.withIndex()) {
-                val row = orderSheet.createRow(index + 1)
-                row.createCell(0).setCellValue(order.id.toDouble())
-                row.createCell(1).setCellValue(order.ngay)
-                row.createCell(2).setCellValue(order.tongTien.toDouble())
-                row.createCell(3).setCellValue(getOrderStatusText(order.trangThai))
+
+
+            // 📌 **3️⃣ Sheet 3: Món ăn bán chạy nhất**
+            val sheet3 = workbook.createSheet("Món ăn bán chạy")
+            val headerRow3 = sheet3.createRow(0)
+            headerRow3.createCell(0).setCellValue("Tên món")
+            headerRow3.createCell(1).setCellValue("Số lần đặt")
+            headerRow3.createCell(2).setCellValue("Tổng doanh thu (VND)")
+
+            val bestSellingFoods = databaseHelper.getBestSellingFoods()
+            for ((index, food) in bestSellingFoods.withIndex()) {
+                val row = sheet3.createRow(index + 1)
+                row.createCell(0).setCellValue(food.tenMon)
+                row.createCell(1).setCellValue(food.soLuong.toDouble()) // Số lần đặt
+                row.createCell(2).setCellValue(food.tongTien.toDouble()) // Doanh thu từ món đó
             }
 
-            // Lưu file
+           
+
+            // 📌 **5️⃣ Sheet 5: Tổng số lượng bán theo từng món**
+            val sheet5 = workbook.createSheet("Tổng số lượng bán")
+            val headerRow5 = sheet5.createRow(0)
+            headerRow5.createCell(0).setCellValue("Tên món")
+            headerRow5.createCell(1).setCellValue("Tổng số lượng bán")
+
+            val totalFoodSales = databaseHelper.getTotalFoodSales()
+            for ((index, food) in totalFoodSales.withIndex()) {
+                val row = sheet5.createRow(index + 1)
+                row.createCell(0).setCellValue(food.tenMon)
+                row.createCell(1).setCellValue(food.soLuong.toDouble()) // Tổng số lượng đã bán
+            }
+            // 📌 **1️⃣ Thống kê doanh thu theo ngày trong tuần**
+
+
+
+            // 📌 **2️⃣ Hiệu suất sử dụng bàn**
+            val sheet7 = workbook.createSheet("Hiệu suất sử dụng bàn")
+            val headerRow7 = sheet7.createRow(0)
+            headerRow7.createCell(0).setCellValue("Mã bàn")
+            headerRow7.createCell(1).setCellValue("Số lần sử dụng")
+
+            val tableUsage = databaseHelper.getTableUsageStats()
+            for ((index, data) in tableUsage.withIndex()) {
+                val row = sheet7.createRow(index + 1)
+                row.createCell(0).setCellValue(data.first.toDouble()) // Mã bàn
+                row.createCell(1).setCellValue(data.second.toDouble()) // Số lần sử dụng
+            }
+
+            // 📌 **Lưu file**
             val folder = File(requireContext().getExternalFilesDir(null), "ThongKe")
             if (!folder.exists()) folder.mkdirs()
             val file = File(folder, "ThongKe_ChiTiet.xlsx")
@@ -207,7 +238,7 @@ class ManageStatisticsFragment : Fragment() {
 
             Toast.makeText(requireContext(), "Đã xuất file Excel: ${file.absolutePath}", Toast.LENGTH_LONG).show()
 
-            // Gửi file qua Gmail
+            // 📌 **Gửi file qua Gmail**
             sendEmailWithAttachment(userEmail, file)
 
         } catch (e: Exception) {
@@ -215,6 +246,7 @@ class ManageStatisticsFragment : Fragment() {
             Toast.makeText(requireContext(), "Lỗi khi xuất file Excel", Toast.LENGTH_SHORT).show()
         }
     }
+
     fun getOrderStatusText(status: Int): String {
         return when (status) {
             1 -> "Đang chờ xử lý"

@@ -45,7 +45,12 @@ class OrderDetailActivity : AppCompatActivity() {
         }
 
         // ✅ Chỉ lấy orderId một lần
-        orderId = dbHelper.getLatestUnpaidOrder(idBan)
+        val latestOrderId = dbHelper.getLatestUnpaidOrder(idBan)
+        if (latestOrderId != orderId) {
+            Log.d("OrderDetailActivity", "🔄 Cập nhật orderId từ $orderId thành $latestOrderId")
+            orderId = latestOrderId
+        }
+
         Log.d("OrderDetailActivity", "🎯 Bàn: $idBan, Order ID: $orderId")
 
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -160,10 +165,18 @@ class OrderDetailActivity : AppCompatActivity() {
         val newOrderId = dbHelper.insertOrder(idBan, timestamp, 0, 2)
 
         if (newOrderId != -1L) {
-            Log.d("OrderDetailActivity", "Đã tạo đơn hàng mới với ID: $newOrderId")
+            Log.d("OrderDetailActivity", "✅ Đã tạo đơn hàng mới với ID: $newOrderId")
+
+            // ✅ Cập nhật lại orderId mới
+            orderId = newOrderId.toInt()
+
+            // ✅ Load lại danh sách món ăn với đơn hàng mới
+            loadOrderDetails(0)
         } else {
-            Log.e("OrderDetailActivity", "Không thể tạo đơn hàng mới!")
+            Log.e("OrderDetailActivity", "❌ Không thể tạo đơn hàng mới!")
         }
+
+
 
         // ✅ Quay về `OrderActivity`
         val intent = Intent(this, OrderActivity::class.java)

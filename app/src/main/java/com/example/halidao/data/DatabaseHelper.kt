@@ -143,7 +143,7 @@ class DatabaseHelper(context: Context) :
 
         db.execSQL("""
             INSERT INTO NhanVien (ten, sdt, email, mat_khau, id_role) 
-            VALUES ('Admin', '0123456789', 'buitantai2704@gmail.com', '123456', 
+            VALUES ('Admin', '0123456789', '23810013@student.hcmute.edu.vn', '123456', 
                 (SELECT id FROM Role WHERE ten_role = 'Quản lý' LIMIT 1));
         """)
         db.execSQL("""
@@ -366,19 +366,18 @@ class DatabaseHelper(context: Context) :
             val order = Order(
                 id = cursor.getInt(0),
                 idBan = cursor.getInt(1),
-                tongTien = cursor.getInt(2),
+                tongTien = if (cursor.isNull(2)) 0 else cursor.getInt(2),
                 trangThai = cursor.getInt(3),
                 daThanhToan = cursor.getInt(4) == 1,
                 idKhachHang = if (cursor.isNull(5)) null else cursor.getInt(5),
-                ngay = cursor.getString(6)
+                ngay = cursor.getString(6) ?: "Không có dữ liệu"
             )
             orders.add(order)
         }
         cursor.close()
-        Log.d("DatabaseHelper", "SQL Query: " + query);
-
         return orders
     }
+
 
     fun getOrdersByStatus(statusId: Int): List<Order> {
         val orders = mutableListOf<Order>()
@@ -852,20 +851,41 @@ class DatabaseHelper(context: Context) :
         return rowsUpdated > 0
     }
     fun getLatestUnpaidOrder(idBan: Int): Int {
-        Log.d("DatabaseHelper", "🔥 Gọi getLatestUnpaidOrder() cho bàn $idBan") // ✅ Debug
-
         val db = readableDatabase
-        val cursor = db.rawQuery(
-            "SELECT id FROM DonHang WHERE id_ban = ? AND id_trang_thai != 7 ORDER BY id DESC LIMIT 1",
-            arrayOf(idBan.toString())
-        )
+        val query = """
+        SELECT id FROM DonHang 
+        WHERE id_ban = ? AND da_thanh_toan = 0 
+        ORDER BY id DESC LIMIT 1
+    """
+        val cursor = db.rawQuery(query, arrayOf(idBan.toString()))
 
-        val orderId = if (cursor.moveToFirst()) cursor.getInt(0) else -1
+        var orderId = -1
+        if (cursor.moveToFirst()) {
+            orderId = cursor.getInt(0)
+        }
+
         cursor.close()
-
-        Log.d("DatabaseHelper", "✅ Lấy orderId mới nhất: $orderId cho bàn $idBan") // ✅ Debug
+        Log.d("DatabaseHelper", "🔥 Debug getLatestUnpaidOrder: Bàn $idBan, orderId=$orderId")
         return orderId
     }
+
+    fun updateOrderDetailsToNewOrder(oldOrderId: Int, newOrderId: Int): Int {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put("id_don_hang", newOrderId) // Cập nhật đơn hàng mới
+        }
+
+        val rowsUpdated = db.update(
+            "ChiTietDonHang",
+            values,
+            "id_don_hang = ?",
+            arrayOf(oldOrderId.toString())
+        )
+
+        db.close()
+        return rowsUpdated
+    }
+
 
 
     fun isOrderPaid(orderId: Int): Boolean {
@@ -935,6 +955,99 @@ class DatabaseHelper(context: Context) :
         cursor.close()
         db.close()
         return categories
+    }
+    fun getBestSellingFoods(): List<FoodStats> {
+        val db = readableDatabase
+        val query = """
+        SELECT MonAn.ten_mon, 
+               SUM(ChiTietDonHang.so_luong) AS total_quantity, 
+               SUM(ChiTietDonHang.so_luong * MonAn.so_tien) AS total_revenue
+        FROM ChiTietDonHang
+        JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
+        GROUP BY MonAn.ten_mon
+        ORDER BY total_quantity DESC
+        LIMIT 10;
+    """
+        val cursor = db.rawQuery(query, null)
+        val list = mutableListOf<FoodStats>()
+
+        while (cursor.moveToNext()) {
+            list.add(FoodStats(cursor.getString(0), cursor.getInt(1), cursor.getInt(2)))
+        }
+        cursor.close()
+        return list
+    }
+
+    fun getMostExpensiveFoods(): List<FoodStats> {
+        val db = readableDatabase
+        val query = """
+        SELECT ten_mon, so_tien
+        FROM MonAn
+        ORDER BY so_tien DESC
+        LIMIT 10;
+    """
+        val cursor = db.rawQuery(query, null)
+        val list = mutableListOf<FoodStats>()
+
+        while (cursor.moveToNext()) {
+            list.add(FoodStats(cursor.getString(0), cursor.getInt(1), 0))
+        }
+        cursor.close()
+        return list
+    }
+    fun getTotalFoodSales(): List<FoodStats> {
+        val db = readableDatabase
+        val query = """
+        SELECT MonAn.ten_mon, SUM(ChiTietDonHang.so_luong) AS total_quantity
+        FROM ChiTietDonHang
+        JOIN MonAn ON ChiTietDonHang.id_mon_an = MonAn.id
+        GROUP BY MonAn.ten_mon
+        ORDER BY total_quantity DESC;
+    """
+        val cursor = db.rawQuery(query, null)
+        val list = mutableListOf<FoodStats>()
+
+        while (cursor.moveToNext()) {
+            list.add(FoodStats(cursor.getString(0), cursor.getInt(1), 0))
+        }
+        cursor.close()
+        return list
+    }
+    fun getWeeklyRevenue(): List<Pair<String, Int>> {
+        val db = readableDatabase
+        val query = """
+        SELECT strftime('%w', ngay) AS thu, SUM(tong_tien) AS doanh_thu
+        FROM DonHang
+        WHERE da_thanh_toan = 1
+        GROUP BY thu
+        ORDER BY thu;
+    """
+        val cursor = db.rawQuery(query, null)
+        val list = mutableListOf<Pair<String, Int>>()
+
+        while (cursor.moveToNext()) {
+            list.add(Pair(cursor.getString(0), cursor.getInt(1)))
+        }
+        cursor.close()
+        return list
+    }
+    fun getTableUsageStats(): List<Pair<Int, Int>> {
+        val db = readableDatabase
+        val query = """
+        SELECT id_ban, COUNT(*) AS so_lan_su_dung
+        FROM DonHang
+        WHERE da_thanh_toan = 1
+        GROUP BY id_ban
+        ORDER BY so_lan_su_dung DESC;
+    """
+        val cursor = db.rawQuery(query, null)
+        val list = mutableListOf<Pair<Int, Int>>()
+
+        while (cursor.moveToNext()) {
+            list.add(Pair(cursor.getInt(0), cursor.getInt(1)))
+        }
+        cursor.close()
+        return list
     }
 
 }
